@@ -9,7 +9,7 @@ import { isRazorpayEnabled } from "@/lib/payments/razorpay";
 import { faqJsonLd } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "FAQ — Magic Eraser Sponge, Delivery & Payments",
+  title: "FAQ: Magic Eraser Sponge, Delivery & Payments",
   description:
     "Answers about how magic cleaning sponges work, where to use them, delivery times, Cash on Delivery, cancellations and refunds.",
   alternates: { canonical: "/faq" },

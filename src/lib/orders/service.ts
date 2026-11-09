@@ -325,8 +325,8 @@ export async function markOrderPaid(input: {
 
     const messages: Record<PaidOutcome, string> = {
       confirmed: `Payment ${input.razorpayPaymentId} received`,
-      reverted_from_cod: `Online payment ${input.razorpayPaymentId} completed after the customer chose COD. Order is PREPAID now — do not collect cash.`,
-      paid_after_cancel: `Payment ${input.razorpayPaymentId} received for a CANCELLED order — refund it in Razorpay or reinstate the order`,
+      reverted_from_cod: `Online payment ${input.razorpayPaymentId} completed after the customer chose COD. Order is PREPAID now, so do not collect cash.`,
+      paid_after_cancel: `Payment ${input.razorpayPaymentId} received for a CANCELLED order: refund it in Razorpay or reinstate the order`,
     };
     await tx
       .insert(orderEvents)

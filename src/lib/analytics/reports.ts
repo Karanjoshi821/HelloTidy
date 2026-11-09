@@ -122,7 +122,7 @@ export async function getSalesReport(range: Range) {
     db
       .select({
         source: sql<string>`coalesce(nullif(${orders.attribution}->>'utmSource', ''), case when ${orders.source} = 'admin' then 'admin (manual)' else 'direct / unknown' end)`,
-        campaign: sql<string>`coalesce(nullif(${orders.attribution}->>'utmCampaign', ''), '—')`,
+        campaign: sql<string>`coalesce(nullif(${orders.attribution}->>'utmCampaign', ''), '-')`,
         orders: count(),
         net: net.mapWith(Number),
       })

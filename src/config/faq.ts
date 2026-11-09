@@ -57,7 +57,7 @@ export const orderFaqs = (cod: OrderFaqSettings): Faq[] => [
   },
   {
     q: "What if my order arrives damaged?",
-    a: `Tell us within ${siteConfig.shipping.claimWindowDays} days of delivery with a photo and we will send a free replacement or a full refund — your choice.`,
+    a: `Tell us within ${siteConfig.shipping.claimWindowDays} days of delivery with a photo and we will send a free replacement or a full refund, your choice.`,
   },
   {
     q: "Can I cancel my order?",

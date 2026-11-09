@@ -11,7 +11,7 @@ export async function GET() {
   const storefront = await getStorefront();
   const packLines = storefront.packs.map(
     (p) =>
-      `- ${p.name}: ${p.count} sponges for ${formatPaise(p.price)} (MRP ${formatPaise(p.mrp)})${p.available ? "" : " — out of stock"}`,
+      `- ${p.name}: ${p.count} sponges for ${formatPaise(p.price)} (MRP ${formatPaise(p.mrp)})${p.available ? "" : " (out of stock)"}`,
   );
   const cod = storefront.codFee > 0 ? `with a ${formatPaise(storefront.codFee)} COD charge` : "with no extra charge";
 

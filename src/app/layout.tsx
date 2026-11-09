@@ -10,7 +10,7 @@ const jakarta = Plus_Jakarta_Sans({
   display: "swap",
 });
 
-const defaultTitle = `${siteConfig.name} — Magic Eraser Sponge | Erase Stains with Just Water`;
+const defaultTitle = `${siteConfig.name}: Magic Eraser Sponge | Erase Stains with Just Water`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),

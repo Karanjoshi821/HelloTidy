@@ -475,7 +475,7 @@ export default async function OrderDetailPage({ params, searchParams }: PageProp
             <p className="mt-3 text-sm text-muted">
               {address}
               <br />
-              {order.city}, {order.state} — {order.pincode}
+              {order.city}, {order.state} - {order.pincode}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <a href={`tel:+91${order.phone}`} className={buttonClasses("outline", "sm")}>

@@ -24,7 +24,7 @@ export const product = {
   shortName: "Magic Cleaning Sponge",
   /** Product line (Hindi: "Erase stains. With just water."). */
   tagline: "Daag mitao. Bas paani se.",
-  subtitle: "Melamine foam magic eraser sponge — erases tough stains with just water",
+  subtitle: "Melamine foam magic eraser sponge that erases tough stains with just water",
   category: "Home cleaning",
   description:
     "Hello Tidy sponges are made of high-density melamine foam. Its micro-fine structure works like an ultra-soft eraser: add water, rub lightly, and scuff marks, crayon, grime and soap scum lift off. No detergent, no harsh chemicals.",
@@ -128,7 +128,7 @@ export const product = {
 
   /** Honest cautions build trust and prevent returns. Keep this list. */
   avoid: [
-    "Skin — never use on your body or face",
+    "Skin: never use on your body or face",
     "Car paint and glossy or polished finishes",
     "Non-stick cookware",
     "Phone, TV and laptop screens, spectacles",

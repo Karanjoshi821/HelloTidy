@@ -6,7 +6,7 @@ import { Container } from "@/components/ui/layout";
 import { guides } from "@/content/guides";
 
 export const metadata: Metadata = {
-  title: "Cleaning Guides — Remove Tough Stains the Easy Way",
+  title: "Cleaning Guides: Remove Tough Stains the Easy Way",
   description:
     "Practical guides to removing crayon from walls, cleaning switchboards, bathroom tiles and kitchen grime with a magic eraser sponge.",
   alternates: { canonical: "/guides" },

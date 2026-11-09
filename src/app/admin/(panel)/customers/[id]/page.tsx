@@ -126,7 +126,7 @@ export default async function CustomerPage({ params }: PageProps<"/admin/custome
                       {a.lines}
                       <br />
                       <span className="text-muted">
-                        {a.city}, {a.state} — {a.pincode}
+                        {a.city}, {a.state} - {a.pincode}
                       </span>
                     </li>
                   ))}

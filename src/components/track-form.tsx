@@ -109,7 +109,7 @@ function TrackResult({ order }: { order: Extract<TrackState, { status: "found" }
       {(order.courierName || order.awbCode) && (
         <div className="mt-6 rounded-2xl bg-surface p-4 text-sm">
           <p>
-            <span className="text-muted">Courier:</span> <strong>{order.courierName ?? "—"}</strong>
+            <span className="text-muted">Courier:</span> <strong>{order.courierName ?? "-"}</strong>
           </p>
           {order.awbCode && (
             <p>

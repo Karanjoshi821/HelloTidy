@@ -133,7 +133,7 @@ export function CartDrawer({ onlinePayments }: { onlinePayments: boolean }) {
                 <li className="py-4">
                   <div className="rounded-2xl bg-mint-soft p-4">
                     <p className="text-sm font-semibold">
-                      Get the {upsell.name} — {upsell.count} sponges at {formatPaise(perPiece(upsell))} each
+                      Get the {upsell.name} with {upsell.count} sponges at {formatPaise(perPiece(upsell))} each
                     </p>
                     <button
                       type="button"

@@ -333,7 +333,7 @@ export async function updateOrderStatus(
     if (next === "cancelled" && opts.reason) message += ` (${opts.reason})`;
     if (releases) message += opts.restock === false ? " · stock not returned" : "";
     if (next === "cancelled" && current.paymentStatus === "paid") {
-      message += " — prepaid: refund it in the Razorpay dashboard, then record the refund here";
+      message += " (prepaid: refund it in the Razorpay dashboard, then record the refund here)";
     }
     await tx.insert(orderEvents).values({ orderId: id, type: "status_changed", message, actor });
     return stock;
@@ -361,7 +361,7 @@ export async function verifyCod(id: string, actor: string, note?: string): Promi
     await tx.insert(orderEvents).values({
       orderId: id,
       type: "cod_verified",
-      message: `COD confirmed with the customer${note ? ` — ${note.slice(0, 200)}` : ""}`,
+      message: `COD confirmed with the customer${note ? `: ${note.slice(0, 200)}` : ""}`,
       actor,
     });
   });
@@ -501,7 +501,7 @@ export async function recordRefund(
     await tx.insert(orderEvents).values({
       orderId: id,
       type: "refunded",
-      message: `Refund of ${formatPaise(input.amount)} recorded (${input.reason.slice(0, 200)})${input.reference ? ` · ref ${input.reference.slice(0, 100)}` : ""}${fullyRefunded ? " — fully refunded" : ""}`,
+      message: `Refund of ${formatPaise(input.amount)} recorded (${input.reason.slice(0, 200)})${input.reference ? ` · ref ${input.reference.slice(0, 100)}` : ""}${fullyRefunded ? " (fully refunded)" : ""}`,
       actor,
     });
     return { fullyRefunded };

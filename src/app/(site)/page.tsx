@@ -78,11 +78,11 @@ export default async function HomePage() {
             </h1>
             <p className="mt-3 text-lg font-semibold text-ink-soft">{product.tagline}</p>
             <p className="mt-4 max-w-lg text-lg text-pretty text-muted">
-              Crayon on walls, grimy switchboards, soap scum, scuffed sneakers — wet the sponge, rub gently, done.
+              Crayon on walls, grimy switchboards, soap scum, scuffed sneakers. Wet the sponge, rub gently, done.
             </p>
             <div id="hero-cta" className="mt-8 flex flex-col gap-3 sm:flex-row">
               <LinkButton href={productHref} size="lg">
-                Shop now{from !== null && <> — from {formatPaise(from)}</>} <ArrowRight className="size-5" />
+                Shop now{from !== null && <> from {formatPaise(from)}</>} <ArrowRight className="size-5" />
               </LinkButton>
               <LinkButton href="#how-it-works" size="lg" variant="outline">
                 See how it works
@@ -147,7 +147,7 @@ export default async function HomePage() {
               align="left"
               eyebrow="Why it works"
               title="Like an eraser, for your whole home"
-              description="Melamine foam has a micro-fine, hard structure. Wet it and it gently lifts stains off the surface — the way an eraser lifts pencil — so you don't need soap or scrubbing."
+              description="Melamine foam has a micro-fine, hard structure. Wet it and it gently lifts stains off the surface, the way an eraser lifts pencil, so you don't need soap or scrubbing."
             />
             <ul className="grid grid-cols-2 gap-4">
               {benefits.map(({ icon: Icon, title, text }) => (

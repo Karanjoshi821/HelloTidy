@@ -41,7 +41,7 @@ export async function lockPacks(tx: Tx, ids: string[]): Promise<PackRow[]> {
 
 function describeLevel(row: PackRow, before: number, after: number, orderNumber: string | null): string | null {
   if (after < 0) {
-    return `Oversold: ${row.name} (${row.sku}) is at ${after} after order ${orderNumber ?? "—"}. Restock it or contact the customer.`;
+    return `Oversold: ${row.name} (${row.sku}) is at ${after} after order ${orderNumber ?? "-"}. Restock it or contact the customer.`;
   }
   if (before > 0 && after <= 0) return `Out of stock: ${row.name} (${row.sku}) just sold out.`;
   if (before > row.lowStockThreshold && after <= row.lowStockThreshold) {

@@ -23,7 +23,7 @@ const PRESETS = [
 ];
 
 function pct(part: number, whole: number): string {
-  return whole ? `${Math.round((part / whole) * 100)}%` : "—";
+  return whole ? `${Math.round((part / whole) * 100)}%` : "-";
 }
 
 export default async function AnalyticsPage({ searchParams }: PageProps<"/admin/analytics">) {
@@ -159,10 +159,10 @@ export default async function AnalyticsPage({ searchParams }: PageProps<"/admin/
               [
                 <strong key="r">RTO rate</strong>,
                 <strong key="c">
-                  {report.outcomes.cod.rtoRate === null ? "—" : `${report.outcomes.cod.rtoRate}%`}
+                  {report.outcomes.cod.rtoRate === null ? "-" : `${report.outcomes.cod.rtoRate}%`}
                 </strong>,
                 <strong key="p">
-                  {report.outcomes.prepaid.rtoRate === null ? "—" : `${report.outcomes.prepaid.rtoRate}%`}
+                  {report.outcomes.prepaid.rtoRate === null ? "-" : `${report.outcomes.prepaid.rtoRate}%`}
                 </strong>,
               ],
             ]}

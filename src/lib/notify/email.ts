@@ -39,7 +39,7 @@ export async function sendOrderConfirmationEmail(order: OrderWithItems): Promise
   const trackUrl = absoluteUrl("/track");
   const payment =
     order.paymentMethod === "cod"
-      ? `Cash on Delivery — please keep ${formatPaise(order.total)} ready.`
+      ? `Cash on Delivery. Please keep ${formatPaise(order.total)} ready.`
       : "Paid online. Thank you!";
 
   const text = [
@@ -53,7 +53,7 @@ export async function sendOrderConfirmationEmail(order: OrderWithItems): Promise
     "",
     `Track your order: ${trackUrl}`,
     "",
-    `— Team ${siteConfig.name}`,
+    `Team ${siteConfig.name}`,
   ].join("\n");
 
   const rows = lines
@@ -77,7 +77,7 @@ export async function sendOrderConfirmationEmail(order: OrderWithItems): Promise
 
   await sendEmail({
     to: order.email,
-    subject: `Order ${order.orderNumber} confirmed — ${siteConfig.name}`,
+    subject: `Order ${order.orderNumber} confirmed | ${siteConfig.name}`,
     html,
     text,
   });
@@ -106,7 +106,7 @@ export async function sendOwnerOrderEmail(order: OrderWithItems): Promise<void> 
   ].join("\n");
   await sendEmail({
     to: owner,
-    subject: `🛒 New order ${order.orderNumber} — ${formatPaise(order.total)}`,
+    subject: `🛒 New order ${order.orderNumber}: ${formatPaise(order.total)}`,
     html: `<pre style="font-family:Arial,Helvetica,sans-serif">${escapeHtml(text)}</pre>`,
     text,
   });
@@ -131,7 +131,7 @@ export async function sendShippedEmail(order: OrderWithItems): Promise<void> {
     "",
     courierTrack ? `Track with the courier: ${courierTrack}` : `Track your order: ${trackUrl}`,
     "",
-    `— Team ${siteConfig.name}`,
+    `Team ${siteConfig.name}`,
   ]
     .filter((line, i, all) => line !== "" || all[i - 1] !== "")
     .join("\n");
@@ -148,7 +148,7 @@ ${cod ? `<p><b>Cash on Delivery:</b> please keep ${escapeHtml(formatPaise(order.
 
   await sendEmail({
     to: order.email,
-    subject: `Order ${order.orderNumber} has shipped — ${siteConfig.name}`,
+    subject: `Order ${order.orderNumber} has shipped | ${siteConfig.name}`,
     html,
     text,
   });

@@ -1,6 +1,6 @@
 # QA report
 
-Run 2026-11-09 12:23 UTC against `http://localhost:3417` (production build, real Chrome). Checklist: [QA-CHECKLIST.md](QA-CHECKLIST.md).
+Run 2026-11-09 13:55 UTC against `http://localhost:3417` (production build, real Chrome). Checklist: [QA-CHECKLIST.md](QA-CHECKLIST.md).
 
 **76 / 76 checks passed.**
 
@@ -85,30 +85,30 @@ Run 2026-11-09 12:23 UTC against `http://localhost:3417` (production build, real
 
 ## Details
 
-### B2 — Every mobile menu link is clickable and navigates; menu closes
+### B2: Every mobile menu link is clickable and navigates; menu closes
 
 - ℹ 5 links tested
 
-### B4 — Desktop navigation links work
+### B4: Desktop navigation links work
 
 - ℹ 5 links
 
-### B7 — Announcement marquee scrolls and pauses on hover
+### B7: Announcement marquee scrolls and pauses on hover
 
 - ℹ 20 items in the moving track
 
-### C1 — Gallery: photos, thumbnails and arrows
+### C1: Gallery: photos, thumbnails and arrows
 
 - ℹ 5 photos
 
-### E2 — Empty submit shows field errors and focuses the first
+### E2: Empty submit shows field errors and focuses the first
 
 - ℹ 8 messages
 
-### E4 — Pincode autofills city and state
+### E4: Pincode autofills city and state
 
 - ℹ 560038 → Bangalore, Karnataka
 
-### G6 — Sitemap URLs all 200; robots blocks private areas
+### G6: Sitemap URLs all 200; robots blocks private areas
 
 - ℹ 14 sitemap URLs

@@ -126,7 +126,7 @@ export function CreateOrderForm({
                     />
                   </label>
                   <span className="w-24 pb-2.5 text-right text-sm font-semibold">
-                    {pack ? formatPaise(pack.price * line.qty) : "—"}
+                    {pack ? formatPaise(pack.price * line.qty) : "-"}
                   </span>
                   <button
                     type="button"

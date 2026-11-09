@@ -22,11 +22,11 @@ function walk(value: unknown, path: string) {
 
 walk(siteConfig, "site");
 walk(product.declarations, "product.declarations");
-if (product.images.length === 0) warnings.push("product.images is empty — add real product photos.");
+if (product.images.length === 0) warnings.push("product.images is empty: add real product photos.");
 const samples = reviews.filter((r) => r.sample).length;
 if (samples)
   problems.push(
-    `${samples} sample (fake) review(s) in src/config/reviews.ts — replace with genuine reviews before running ads`,
+    `${samples} sample (fake) review(s) in src/config/reviews.ts: replace with genuine reviews before running ads`,
   );
 
 const requiredEnv = ["DATABASE_URL", "APP_SECRET", "NEXT_PUBLIC_SITE_URL"];
@@ -36,7 +36,7 @@ const optionalEnv: Record<string, string> = {
   RAZORPAY_KEY_ID: "online payments are off (COD only)",
   RAZORPAY_WEBHOOK_SECRET: "Razorpay webhook backup is off",
   TELEGRAM_BOT_TOKEN: "no Telegram ping on new orders",
-  NEXT_PUBLIC_META_PIXEL_ID: "Meta Pixel is off — you can't optimise ads",
+  NEXT_PUBLIC_META_PIXEL_ID: "Meta Pixel is off, so you can't optimise ads",
   META_CAPI_ACCESS_TOKEN: "Meta Conversions API is off",
   RESEND_API_KEY: "no order confirmation emails",
 };

@@ -122,7 +122,7 @@ export default async function PrintOrdersPage({ searchParams }: PageProps<"/admi
                       </>
                     ) : null}
                     <br />
-                    {o.city}, {o.state} — {o.pincode}
+                    {o.city}, {o.state} - {o.pincode}
                     <br />
                     Phone: +91 {o.phone}
                   </p>

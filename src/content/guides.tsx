@@ -109,7 +109,7 @@ export const guides: Guide[] = [
   },
   {
     slug: "how-to-use-magic-eraser-sponge",
-    title: "How to Use a Magic Eraser Sponge — and Where Not to Use It",
+    title: "How to Use a Magic Eraser Sponge, and Where Not to Use It",
     metaTitle: "How to Use a Magic Eraser Sponge (and Where Not To)",
     cardTitle: "How to use a magic eraser sponge",
     cover: { src: "/images/steps/wet.webp", alt: "A white melamine sponge being dipped in a bowl of water" },

@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 /**
  * Optimistic admin gate: bounces visitors without a session cookie to the
- * login page. This is a UX shortcut only — every admin page, server action and
+ * login page. This is a UX shortcut only: every admin page, server action and
  * route handler verifies the session against the database itself.
  */
 const SESSION_COOKIES = ["__Host-hellotidy_admin", "hellotidy_admin"];

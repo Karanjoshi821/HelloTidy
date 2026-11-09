@@ -3,7 +3,7 @@ import { siteConfig } from "@/config/site";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: `${siteConfig.name} — Magic Cleaning Sponges`,
+    name: `${siteConfig.name} Magic Cleaning Sponges`,
     short_name: siteConfig.name,
     description: siteConfig.shortDescription,
     start_url: "/",

@@ -21,16 +21,16 @@ export function LogoMark({ className }: { className?: string }) {
   );
 }
 
-/** The main logo: stacked wordmark with a sparkle for the dot of the i. */
+/** The main logo: one-line wordmark with a sparkle for the dot of the i. */
 export function BrandLogo({ onDark = false, className }: { onDark?: boolean; className?: string }) {
   return (
     <Image
       src={onDark ? "/brand/hello-tidy-logo-on-dark.svg" : "/brand/hello-tidy-logo.svg"}
       alt={siteConfig.name}
-      width={135}
-      height={116}
+      width={259}
+      height={65}
       unoptimized
-      className={cn("h-12 w-auto", className)}
+      className={cn("h-8 w-auto", className)}
     />
   );
 }

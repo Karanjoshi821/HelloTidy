@@ -679,7 +679,7 @@ async function main() {
     if (!city)
       return {
         problems: [],
-        info: ["India Post API didn't answer (offline or slow) — fallback hint shown; not counted as a failure"],
+        info: ["India Post API didn't answer (offline or slow), fallback hint shown; not counted as a failure"],
       };
     return { problems: state === "Karnataka" ? [] : [`state "${state}"`], info: [`560038 → ${city}, ${state}`] };
   });
@@ -1685,7 +1685,7 @@ async function main() {
   if (withDetails.length) {
     lines.push("## Details", "");
     for (const r of withDetails) {
-      lines.push(`### ${r.id} — ${r.title}`, "", ...r.details.slice(0, 40).map((d) => `- ${d}`), "");
+      lines.push(`### ${r.id}: ${r.title}`, "", ...r.details.slice(0, 40).map((d) => `- ${d}`), "");
     }
   }
   if (notes.length) lines.push("## Notes", "", ...notes.map((n) => `- ${n}`), "");

@@ -44,7 +44,7 @@ export async function notifyPaid(result: PaidResult): Promise<void> {
   if (outcome === "reverted_from_cod") {
     // The COD switch already announced this order; only the payment mode changed.
     return notifyOwnerAlert(
-      `Order ${order.orderNumber} was switched to Cash on Delivery, but the customer's online payment went through. It is now PREPAID — make sure the courier does not collect cash.`,
+      `Order ${order.orderNumber} was switched to Cash on Delivery, but the customer's online payment went through. It is now PREPAID, so make sure the courier does not collect cash.`,
       order.id,
     );
   }

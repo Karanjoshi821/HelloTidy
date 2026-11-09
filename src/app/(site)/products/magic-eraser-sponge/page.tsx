@@ -49,7 +49,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const storefront = await getStorefront();
   const sizes = packSizesLabel(storefront);
   const from = lowestPrice(storefront);
-  const title = sizes ? `Magic Eraser Sponge — Packs of ${sizes}` : "Magic Eraser Sponge";
+  const title = sizes ? `Magic Eraser Sponge: Packs of ${sizes}` : "Magic Eraser Sponge";
   const description = `Melamine magic eraser sponges that remove crayon, scuffs, grime and soap scum with just water.${from !== null ? ` From ${formatPaise(from)}.` : ""} Free delivery, COD available.`;
   return {
     title,
