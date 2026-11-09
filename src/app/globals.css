@@ -1,0 +1,298 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --color-ink: #0e2a1f;
+  --color-ink-soft: #2f4a3d;
+  --color-muted: #587063;
+  --color-line: #dfeae3;
+  --color-surface: #f1f8f3;
+  --color-canvas: #ffffff;
+
+  --color-brand: #0f7a3c;
+  --color-brand-dark: #0b5e2e;
+  --color-brand-soft: #e3f5e9;
+
+  --color-mint: #bff0cf;
+  --color-mint-soft: #e8f8ee;
+
+  /* Admin status badges only: the storefront is green and white. */
+  --color-sun: #ffd23f;
+  --color-sun-soft: #fff6d6;
+
+  --color-success: #0a7444;
+  --color-success-soft: #e6f6ee;
+  --color-danger: #b42f2f;
+  --color-danger-soft: #fdecec;
+  --color-warn: #925a00;
+  --color-warn-soft: #fff3df;
+
+  --shadow-card: 0 1px 2px rgb(14 42 31 / 0.04), 0 8px 24px -12px rgb(14 42 31 / 0.12);
+  --shadow-lift: 0 2px 4px rgb(14 42 31 / 0.06), 0 16px 40px -16px rgb(15 122 60 / 0.32);
+}
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+::selection {
+  background: var(--color-brand-soft);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+/* <details> accordions */
+details > summary {
+  list-style: none;
+  cursor: pointer;
+}
+details > summary::-webkit-details-marker {
+  display: none;
+}
+details[open] .chevron {
+  transform: rotate(180deg);
+}
+
+/* Long-form content (policies, guides) */
+.prose-brand {
+  color: var(--color-ink-soft);
+  line-height: 1.75;
+}
+.prose-brand h2 {
+  color: var(--color-ink);
+  font-size: 1.375rem;
+  font-weight: 700;
+  margin: 2.25rem 0 0.75rem;
+  letter-spacing: -0.01em;
+}
+.prose-brand h3 {
+  color: var(--color-ink);
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 1.75rem 0 0.5rem;
+}
+.prose-brand p {
+  margin: 0 0 1rem;
+}
+.prose-brand ul,
+.prose-brand ol {
+  margin: 0 0 1rem;
+  padding-left: 1.25rem;
+}
+.prose-brand ul {
+  list-style: disc;
+}
+.prose-brand ol {
+  list-style: decimal;
+}
+.prose-brand li {
+  margin: 0.25rem 0;
+}
+.prose-brand a {
+  color: var(--color-brand);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose-brand strong {
+  color: var(--color-ink);
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.animate-sheet-in {
+  animation: sheet-in 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+@keyframes drawer-in {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+.animate-drawer-in {
+  animation: drawer-in 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* <select> with appearance-none loses its native arrow: draw one. */
+.select-chevron {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23587063' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+}
+
+/* Admin print pages: only the printable sheet, edge to edge. */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .print-sheet {
+    box-shadow: none !important;
+    margin: 0 !important;
+    break-after: page;
+  }
+  .print-sheet:last-child {
+    break-after: auto;
+  }
+  body {
+    background: #fff !important;
+  }
+}
+
+/* Announcement marquee: the track holds two identical halves, so -50% loops seamlessly. */
+@keyframes marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+.animate-marquee {
+  animation: marquee 55s linear infinite;
+}
+/* Lives here (not as a Tailwind group-hover utility): un-layered CSS beats layered utilities. */
+.marquee-bar:hover .animate-marquee {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none !important;
+  }
+}
+
+/* ─── Admin dark theme ───────────────────────────────────────────────────
+ * Only inside [data-admin-theme] (admin panel and sign-in), only on screen:
+ * the storefront and printed labels/packing slips always stay light.
+ * Most colours flip by redefining the tokens; the few utilities that mean
+ * "white card" or "dark chip" are remapped below. Brand green stays the same.
+ */
+@media screen {
+  html.dark:has([data-admin-theme]) {
+    color-scheme: dark;
+  }
+  html.dark:has([data-admin-theme]) body {
+    background: #0a1410;
+  }
+
+  html.dark [data-admin-theme] {
+    color-scheme: dark;
+    --color-ink: #e7efe9;
+    --color-ink-soft: #c4d3ca;
+    --color-muted: #94aa9d;
+    --color-line: #24352c;
+    --color-surface: #0a1410;
+    --color-canvas: #0a1410;
+    --color-brand-soft: #14301f;
+    --color-success: #3fcf8e;
+    --color-success-soft: #0f2b20;
+    --color-danger: #ff8a8a;
+    --color-danger-soft: #3a181b;
+    --color-warn: #f2b84b;
+    --color-warn-soft: #33260c;
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.35), 0 8px 24px -12px rgb(0 0 0 / 0.6);
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+  }
+
+  /* White cards and inputs become raised dark cards. */
+  html.dark [data-admin-theme] .bg-white,
+  html.dark [data-admin-theme] .focus\:bg-white:focus {
+    background-color: #121f19;
+  }
+  html.dark [data-admin-theme] .bg-white\/95 {
+    background-color: rgb(18 31 25 / 0.95);
+  }
+  /* Dark chips (active nav item, active tab, dark buttons) use brand green, so white text stays readable. */
+  html.dark [data-admin-theme] .bg-ink {
+    background-color: var(--color-brand);
+  }
+  html.dark [data-admin-theme] .hover\:bg-ink-soft:hover {
+    background-color: var(--color-brand-dark);
+  }
+  html.dark [data-admin-theme] .bg-ink\/40 {
+    background-color: rgb(0 0 0 / 0.6);
+  }
+  /* Yellow stays yellow (e.g. the "Confirmed" badge), so its text stays dark. */
+  html.dark [data-admin-theme] .bg-sun {
+    color: #0e2a1f;
+  }
+  /* Brand green as text needs to be lighter on dark to stay readable (WCAG AA). */
+  html.dark [data-admin-theme] .text-brand {
+    color: #6fdc9a;
+  }
+  html.dark [data-admin-theme] .text-brand-dark {
+    color: #a6ecc1;
+  }
+}
+
+/* ─── Theme switch animation (admin) ───────────────────────────────────────
+ * The new theme is revealed by an animated clip-path on the new snapshot
+ * (see components/admin/theme-toggle.tsx), so the default cross-fade is off
+ * and the new snapshot sits on top of the old one.
+ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 2;
+}
+/* While the theme switches, nothing eases its colours: the blob shows the new theme as it is. */
+html[data-theme-switching] *,
+html[data-theme-switching] *::before,
+html[data-theme-switching] *::after {
+  transition: none !important;
+}
