@@ -181,7 +181,7 @@ export default async function ProductPage() {
             ["#choose-pack", "Compare packs"],
             ["#results", "See results"],
             ["#how-it-works", "How to use"],
-            ["#reviews", "Reviews"],
+            ...(genuineReviews.length ? [["#reviews", "Reviews"]] : []),
             ["#product-faq", "Questions"],
           ].map(([href, label]) => (
             <a key={href} href={href} className="rounded-full border border-line px-4 py-2 hover:bg-surface">
@@ -227,10 +227,12 @@ export default async function ProductPage() {
         <UseCases />
       </Section>
 
-      <Section id="reviews">
-        <SectionHeading eyebrow="Reviews" title="What customers say" />
-        <ReviewsSection initialCount={4} />
-      </Section>
+      {genuineReviews.length > 0 && (
+        <Section id="reviews">
+          <SectionHeading eyebrow="Reviews" title="What customers say" />
+          <ReviewsSection initialCount={4} />
+        </Section>
+      )}
 
       <Section id="how-it-works" className="bg-surface">
         <SectionHeading eyebrow="How to use" title="Wet. Rub. Wipe." />

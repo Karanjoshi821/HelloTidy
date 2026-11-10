@@ -12,6 +12,7 @@
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { chromium, type Browser, type BrowserContext, type Locator, type Page } from "playwright-core";
+import { reviews } from "../../src/config/reviews";
 
 const BASE = process.env.BASE_URL ?? "http://localhost:3100";
 const SHOTS = process.env.SCREENSHOT_DIR;
@@ -499,24 +500,23 @@ async function main() {
     return text?.includes("Home Pack") ? [] : ["Home Pack not in cart"];
   });
 
-  await check("C8", "Sample-review notice and 'sample reviews' label are shown", async () => {
-    await m.goto(`${BASE}/products/magic-eraser-sponge`);
+  await check("C8", "Sample reviews are never shown (no section, rating or menu link)", async () => {
+    const genuine = reviews.filter((r) => !r.sample).length;
     const problems: string[] = [];
-    const notice = m.locator("#reviews").getByText("These look real but are fake.");
-    if (!(await notice.isVisible())) problems.push("notice missing on product page");
-    const firstCard = m.locator("#reviews ul li").first();
-    const noticeBox = await notice.boundingBox();
-    const cardBox = await firstCard.boundingBox();
-    if (noticeBox && cardBox && noticeBox.y > cardBox.y) problems.push("notice is below the reviews, not on top");
-    const inline = await m.locator("#buy a[href='#reviews']").textContent();
-    if (!inline?.includes("sample review")) problems.push(`rating line: "${inline}"`);
-    await m.goto(`${BASE}/`);
-    if (!(await m.locator("#reviews").getByText("These look real but are fake.").isVisible()))
-      problems.push("notice missing on home page");
+    for (const path of ["/products/magic-eraser-sponge", "/"]) {
+      await m.goto(`${BASE}${path}`);
+      if (await m.getByText("These look real but are fake.").count()) problems.push(`sample notice on ${path}`);
+      if (await m.getByText(/sample reviews?/i).count()) problems.push(`"sample review" text on ${path}`);
+      const section = await m.locator("#reviews").count();
+      if (!genuine && section) problems.push(`reviews section shown on ${path} with no genuine reviews`);
+    }
+    await m.goto(`${BASE}/products/magic-eraser-sponge`);
+    if (!genuine && (await m.locator("a[href='#reviews']").count())) problems.push("rating line or menu links to #reviews");
     return problems;
   });
 
-  await check("C9", "Review photo lightbox", async () => {
+  await check("C9", "Review photo lightbox (only when genuine reviews have photos)", async () => {
+    if (!reviews.some((r) => !r.sample && r.photo)) return [];
     await m.goto(`${BASE}/products/magic-eraser-sponge`);
     await m
       .locator("#reviews")

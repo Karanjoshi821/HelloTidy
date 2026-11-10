@@ -15,7 +15,10 @@ import {
   TriangleAlert,
   X,
 } from "lucide-react";
-import { reviews as allReviews, reviewStats, type Review } from "@/config/reviews";
+// Only genuine reviews are ever shown; sample reviews are never published.
+import { genuineReviews as allReviews, reviewStats as statsFor, type Review } from "@/config/reviews";
+
+const reviewStats = () => statsFor(allReviews);
 import { whatsappLink } from "@/config/site";
 import { cn, formatDate } from "@/lib/utils";
 import { buttonClasses } from "./ui/button";

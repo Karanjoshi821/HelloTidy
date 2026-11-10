@@ -146,5 +146,8 @@ export function reviewStats(list: Review[] = reviews) {
   return { count, average, distribution, hasSamples: list.some((r) => r.sample) };
 }
 
-/** Only genuine reviews may be sent to Google as structured data. */
+/**
+ * The only reviews the site shows or sends to Google. Sample reviews stay in
+ * the list above for reference but are never published.
+ */
 export const genuineReviews = reviews.filter((r) => !r.sample);
