@@ -1,0 +1,75 @@
+# Hello Tidy Postgres, on the Oracle VM next to whatGM. See infra/db/README.md.
+# Lives at ~/hellotidy-db on the server; secrets/ and tls/ are created there by
+# setup.sh and never leave the server.
+services:
+  postgres:
+    image: postgres:17
+    container_name: hellotidy-pg
+    # Comes back after a crash or a VM reboot.
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+    command:
+      - postgres
+      - -c
+      - hba_file=/etc/postgresql/pg_hba.conf
+      - -c
+      - listen_addresses=*
+      # TLS with the Let's Encrypt certificate Caddy keeps renewed for
+      # db.hellotidy.in (copied in by sync-cert.sh).
+      - -c
+      - ssl=on
+      - -c
+      - ssl_cert_file=/etc/postgresql/tls/server.crt
+      - -c
+      - ssl_key_file=/etc/postgresql/tls/server.key
+      - -c
+      - ssl_min_protocol_version=TLSv1.2
+      - -c
+      - password_encryption=scram-sha-256
+      # Vercel opens a small pool per function instance; 200 leaves headroom
+      # for an ad spike without a separate pooler.
+      - -c
+      - max_connections=200
+      # Sized for a 12 GB VM shared with whatGM (capped at 4 GB).
+      - -c
+      - shared_buffers=1GB
+      - -c
+      - effective_cache_size=4GB
+      - -c
+      - work_mem=8MB
+      - -c
+      - maintenance_work_mem=256MB
+      # A request that dies mid-transaction must not hold locks forever.
+      - -c
+      - idle_in_transaction_session_timeout=60s
+      - -c
+      - log_min_duration_statement=1000
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ./tls:/etc/postgresql/tls:ro
+    shm_size: 256m
+    healthcheck:
+      # As the postgres OS user, so the socket's peer check passes instead of
+      # logging a failed login every 10 seconds.
+      test: ["CMD", "gosu", "postgres", "pg_isready", "-q", "-h", "/var/run/postgresql"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password
+
+volumes:
+  pgdata:
