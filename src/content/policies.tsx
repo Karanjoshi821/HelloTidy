@@ -297,7 +297,10 @@ export const policies: Policy[] = [
 
         <h2>Prices and payment</h2>
         <ul>
-          <li>Prices are in Indian Rupees and include GST. Delivery is free.</li>
+          <li>
+            Prices are in Indian Rupees and {siteConfig.gstin ? "include GST" : "are final, with no tax added"}. Delivery
+            is free.
+          </li>
           <li>
             A Cash on Delivery charge of {formatPaise(codFee)} applies to COD orders and is shown before you order. COD
             is available on orders up to {formatPaise(codMaxOrderValue)}.

@@ -15,7 +15,7 @@ const siteUrl = (
 export const siteConfig = {
   name: "Hello Tidy",
   /** Registered business name exactly as on your GST / PAN / bank account. */
-  legalName: "TODO: Registered business name",
+  legalName: "Karan Joshi",
   /** Brand line: general, so it fits every future product. */
   tagline: "Say hello to a tidier home.",
   shortDescription:
@@ -26,32 +26,32 @@ export const siteConfig = {
 
   contact: {
     /** Shown as-is on the site. */
-    phoneDisplay: "TODO: +91 98765 43210",
+    phoneDisplay: "+91 96259 02351",
     /** Digits only with country code, used for tel: links. */
-    phone: "TODO",
+    phone: "919625902351",
     /** Digits only with country code (e.g. 919876543210), used for wa.me links. */
-    whatsapp: "TODO",
-    email: "TODO: support@hellotidy.in",
+    whatsapp: "919625902351",
+    email: "support@hellotidy.in",
     hours: "Mon–Sat, 10:00 am – 7:00 pm",
     responseTime: "We reply within a few hours on working days.",
   },
 
   /** Registered / pickup address. Required on the Contact page by the E-Commerce Rules, 2020. */
   address: {
-    line1: "TODO: Building, street",
-    line2: "TODO: Area, locality",
-    city: "TODO: City",
-    state: "TODO: State",
-    pincode: "TODO",
+    line1: "House No. 113, Block D",
+    line2: "Khora Colony",
+    city: "Ghaziabad",
+    state: "Uttar Pradesh",
+    pincode: "201001",
     country: "India",
   },
 
   /** Required by Consumer Protection (E-Commerce) Rules, 2020. */
   grievanceOfficer: {
-    name: "TODO: Full name",
+    name: "Karan Joshi",
     designation: "Grievance Officer",
-    email: "TODO: grievance@hellotidy.in",
-    phone: "TODO: +91 98765 43210",
+    email: "support@hellotidy.in",
+    phone: "+91 96259 02351",
   },
 
   /** Leave empty until registered; it is hidden when empty. */

@@ -195,7 +195,7 @@ export default async function PrintOrdersPage({ searchParams }: PageProps<"/admi
                     <dd>{formatPaise(o.total)}</dd>
                   </div>
                   {o.refundedAmount > 0 && <Line label="Refunded" value={`−${formatPaise(o.refundedAmount)}`} />}
-                  <p className="pt-1 text-right text-xs text-muted">Prices include GST.</p>
+                  {siteConfig.gstin && <p className="pt-1 text-right text-xs text-muted">Prices include GST.</p>}
                 </dl>
               )}
 

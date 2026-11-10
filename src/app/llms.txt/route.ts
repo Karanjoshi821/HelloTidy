@@ -21,7 +21,7 @@ export async function GET() {
 
 ${siteConfig.name} sells ${product.name}: ${product.description}
 
-## Packs and prices (INR, inclusive of GST, free delivery)
+## Packs and prices (INR, ${siteConfig.gstin ? "inclusive of GST" : "final prices"}, free delivery)
 ${packLines.join("\n")}
 - Cash on Delivery available up to ${formatPaise(storefront.codMaxOrderValue)} ${cod}.
 - Delivery: dispatched within ${siteConfig.shipping.dispatch}, delivered in ${siteConfig.shipping.delivery}, across India.

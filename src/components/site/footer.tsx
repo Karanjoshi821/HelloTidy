@@ -85,7 +85,8 @@ export function Footer() {
             reserved.
             {siteConfig.gstin && <span className="ml-2">GSTIN: {siteConfig.gstin}</span>}
           </p>
-          <p>Prices include GST. Free delivery across India.</p>
+          {/* Only a GST-registered seller may say prices include GST. */}
+          <p>{siteConfig.gstin ? "Prices include GST." : "All prices are final."} Free delivery across India.</p>
         </div>
       </div>
     </footer>
