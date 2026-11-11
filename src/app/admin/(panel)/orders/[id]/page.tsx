@@ -16,6 +16,7 @@ import {
   verifyCodAction,
 } from "@/app/admin/order-actions";
 import { ActionForm } from "@/components/admin/action-form";
+import { FlashToast } from "@/components/admin/toaster";
 import { RecoveryButton } from "@/components/admin/recovery-button";
 import { PaymentBadge, StatusBadge, TagList } from "@/components/admin/status";
 import { adminInput, adminSelect, adminTextarea, Card, Notice, PageHeader } from "@/components/admin/ui";
@@ -47,9 +48,9 @@ const EVENT_DOT: Record<string, string> = {
   cod_verified: "bg-success",
 };
 
-export default async function OrderDetailPage({ params, searchParams }: PageProps<"/admin/orders/[id]">) {
+export default async function OrderDetailPage({ params }: PageProps<"/admin/orders/[id]">) {
   const user = await requireAdmin();
-  const [{ id }, sp] = await Promise.all([params, searchParams]);
+  const { id } = await params;
   const detail = await getOrderDetail(id);
   if (!detail) notFound();
   const { order, items, events, refunds, customer, laterOrder } = detail;
@@ -71,7 +72,7 @@ export default async function OrderDetailPage({ params, searchParams }: PageProp
 
   return (
     <div className="space-y-6">
-      {sp.created && <Notice tone="success">Order created. Stock has been updated.</Notice>}
+      <FlashToast param="created" message="Order created. Stock has been updated." />
       <PageHeader
         back={{ href: "/admin/orders", label: "Orders" }}
         title={<span className="font-mono">{order.orderNumber}</span>}

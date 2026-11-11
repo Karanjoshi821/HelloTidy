@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Plus, TicketPercent } from "lucide-react";
 import { DiscountStateBadge } from "@/components/admin/discount-badge";
-import { Card, EmptyState, Notice, PageHeader } from "@/components/admin/ui";
+import { FlashToast } from "@/components/admin/toaster";
+import { Card, EmptyState, PageHeader } from "@/components/admin/ui";
 import { buttonClasses } from "@/components/ui/button";
 import { requireOwner } from "@/lib/auth/dal";
 import { describeDiscount, listDiscountsAdmin } from "@/lib/discounts/admin";
@@ -14,13 +15,13 @@ export const metadata: Metadata = { title: "Discounts" };
 /** Internal page: always rendered per request, navigation may block. */
 export const instant = false;
 
-export default async function DiscountsPage({ searchParams }: PageProps<"/admin/discounts">) {
+export default async function DiscountsPage() {
   await requireOwner();
-  const [rows, sp] = await Promise.all([listDiscountsAdmin(), searchParams]);
+  const rows = await listDiscountsAdmin();
 
   return (
     <div className="space-y-4">
-      {sp.deleted && <Notice tone="success">Discount deleted.</Notice>}
+      <FlashToast param="deleted" message="Discount deleted." />
       <PageHeader
         title="Discounts"
         description="Codes customers type at checkout. A use counts once an order goes through; cancelled orders give it back."

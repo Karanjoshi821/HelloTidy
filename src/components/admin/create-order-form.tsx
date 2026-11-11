@@ -10,6 +10,7 @@ import { formatPaise } from "@/lib/money";
 import { adminOrderLimits, quote, QuoteError, type PricingCatalog } from "@/lib/pricing";
 import { useFormAction } from "@/lib/use-form-action";
 import { cn } from "@/lib/utils";
+import { useResultToast } from "./toaster";
 import { adminInput, adminSelect, adminTextarea } from "./ui";
 
 export type StaffPack = PricingCatalog["packs"][number] & { hidden: boolean; stock: number | null };
@@ -37,6 +38,8 @@ export function CreateOrderForm({
   canDiscount: boolean;
 }) {
   const { state, onSubmit, pending } = useFormAction<ActionResult>(createOrderAction, null);
+  // Success redirects to the new order (which toasts there); errors toast here.
+  useResultToast(state);
   const firstPack = packs.find((p) => p.available && !p.hidden) ?? packs[0];
   const [lines, setLines] = useState<Line[]>(firstPack ? [{ packId: firstPack.id, qty: 1 }] : []);
   const [payment, setPayment] = useState<"cod" | "paid">("cod");
@@ -342,7 +345,7 @@ export function CreateOrderForm({
         </section>
 
         {state && !state.ok && (
-          <p className="rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger" role="alert">
+          <p className="rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">
             {state.message}
           </p>
         )}

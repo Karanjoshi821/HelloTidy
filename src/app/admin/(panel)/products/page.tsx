@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ExternalLink, Package, Plus } from "lucide-react";
-import { Card, EmptyState, Notice, PageHeader } from "@/components/admin/ui";
+import { Card, EmptyState, PageHeader } from "@/components/admin/ui";
+import { FlashToast } from "@/components/admin/toaster";
 import { buttonClasses } from "@/components/ui/button";
 import { Badge } from "@/components/ui/layout";
 import { product } from "@/config/products";
@@ -25,14 +26,14 @@ function StockCell({ track, stock, threshold }: { track: boolean; stock: number;
   );
 }
 
-export default async function ProductsPage({ searchParams }: PageProps<"/admin/products">) {
+export default async function ProductsPage() {
   const user = await requireAdmin();
-  const [rows, sp] = await Promise.all([listPacksAdmin(), searchParams]);
+  const rows = await listPacksAdmin();
   const isOwner = user.role === "owner";
 
   return (
     <div className="space-y-4">
-      {sp.deleted && <Notice tone="success">Pack deleted.</Notice>}
+      <FlashToast param="deleted" message="Pack deleted." />
       <PageHeader
         title="Products"
         description={`${product.name}: the packs (variants) customers can buy. Changes show on the store immediately.`}

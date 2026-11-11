@@ -1147,7 +1147,8 @@ async function main() {
       const shipping = a.locator('form:has(input[name="trackingUrl"])');
       await a.fill('input[name="trackingUrl"]', "http://insecure.example.com");
       await shipping.getByRole("button", { name: "Save", exact: true }).click();
-      if (!(await until(a.getByText("must start with https://")))) problems.push("http tracking link accepted");
+      // Errors show by the form and in a toast.
+      if (!(await until(a.getByText("must start with https://").first()))) problems.push("http tracking link accepted");
       await a.fill('input[name="courierName"]', "Delhivery");
       await a.fill('input[name="awbCode"]', "1234567890");
       await a.fill('input[name="trackingUrl"]', "https://www.delhivery.com/track/package/1234567890");
@@ -1383,7 +1384,12 @@ async function main() {
       const form = a.locator('form:has(input[name="codBlocked"])');
       await a.check('input[name="codBlocked"]');
       await form.getByRole("button", { name: "Save" }).click();
-      if (!(await until(form.getByText("Saved.")))) problems.push("block not saved");
+      // Saves confirm in a toast, which then closes by itself.
+      const savedToast = a.getByRole("region", { name: "Notifications" }).getByText("Saved.");
+      if (!(await until(savedToast))) problems.push("block not saved (no toast)");
+      // A toast pauses while hovered, so move the pointer off it (it may have opened under the cursor).
+      else if ((await a.mouse.move(5, 5), !(await savedToast.waitFor({ state: "detached", timeout: 9_000 }).then(() => true, () => false))))
+        problems.push("toast didn't close by itself");
       const { ctx, page } = await shopper();
       await page.goto(`${BASE}/checkout?pack=pack-25&qty=1`);
       await fillCheckout(page, "9876543210");

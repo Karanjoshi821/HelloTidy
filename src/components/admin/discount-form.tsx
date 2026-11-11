@@ -6,6 +6,7 @@ import { buttonClasses } from "@/components/ui/button";
 import type { ActionResult } from "@/lib/action-result";
 import { useFormAction } from "@/lib/use-form-action";
 import { cn } from "@/lib/utils";
+import { useResultToast } from "./toaster";
 import { adminInput } from "./ui";
 
 export type DiscountFormValues = {
@@ -38,6 +39,7 @@ export function DiscountForm({
   locked?: boolean;
 }) {
   const { state, onSubmit, pending } = useFormAction<ActionResult>(action, null);
+  useResultToast(state);
   const [type, setType] = useState(values.type);
 
   return (
@@ -181,11 +183,7 @@ export function DiscountForm({
         </div>
       </section>
 
-      {state && (
-        <p className={cn("text-sm", state.ok ? "text-success" : "text-danger")} role={state.ok ? "status" : "alert"}>
-          {state.message}
-        </p>
-      )}
+      {state && !state.ok && <p className="text-sm text-danger">{state.message}</p>}
       <button type="submit" disabled={pending} className={buttonClasses("primary")}>
         {pending && <Loader2 className="size-4 animate-spin" />} {submitLabel}
       </button>

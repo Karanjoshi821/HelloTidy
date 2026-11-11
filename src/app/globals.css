@@ -149,6 +149,19 @@ details[open] .chevron {
 .animate-fade-in {
   animation: fade-in 0.2s ease-out;
 }
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.animate-toast-in {
+  animation: toast-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
 @keyframes drawer-in {
   from {
     transform: translateX(-100%);

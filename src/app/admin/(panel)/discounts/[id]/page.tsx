@@ -3,10 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { deleteDiscountAction, toggleDiscountAction, updateDiscountAction } from "@/app/admin/discount-actions";
 import { ActionForm } from "@/components/admin/action-form";
+import { FlashToast } from "@/components/admin/toaster";
 import { DiscountStateBadge } from "@/components/admin/discount-badge";
 import { DiscountForm } from "@/components/admin/discount-form";
 import { StatusBadge } from "@/components/admin/status";
-import { Card, Notice, PageHeader, StatCard } from "@/components/admin/ui";
+import { Card, PageHeader, StatCard } from "@/components/admin/ui";
 import { buttonClasses } from "@/components/ui/button";
 import { requireOwner } from "@/lib/auth/dal";
 import { describeDiscount, getDiscountAdmin } from "@/lib/discounts/admin";
@@ -19,9 +20,9 @@ export const metadata: Metadata = { title: "Discount" };
 /** Internal page: always rendered per request, navigation may block. */
 export const instant = false;
 
-export default async function DiscountPage({ params, searchParams }: PageProps<"/admin/discounts/[id]">) {
+export default async function DiscountPage({ params }: PageProps<"/admin/discounts/[id]">) {
   await requireOwner();
-  const [{ id }, sp] = await Promise.all([params, searchParams]);
+  const { id } = await params;
   const detail = await getDiscountAdmin(id);
   if (!detail) notFound();
   const { discount: d, uses, revenue, discounted, recent, state } = detail;
@@ -29,11 +30,10 @@ export default async function DiscountPage({ params, searchParams }: PageProps<"
 
   return (
     <div className="space-y-6">
-      {sp.created && (
-        <Notice tone="success">
-          Code created. Customers can use it right away{state === "active" ? "" : " once it's active"}.
-        </Notice>
-      )}
+      <FlashToast
+        param="created"
+        message={`Code created. Customers can use it ${state === "active" ? "right away" : "once it's active"}.`}
+      />
       <PageHeader
         back={{ href: "/admin/discounts", label: "Discounts" }}
         title={<span className="font-mono">{d.code}</span>}

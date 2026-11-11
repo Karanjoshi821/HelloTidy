@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
 import { AdminNav } from "@/components/admin/admin-nav";
+import { Toaster } from "@/components/admin/toaster";
 import { getNavCounts } from "@/lib/admin-nav-counts";
 import { getAdmin } from "@/lib/auth/dal";
 
@@ -14,6 +15,7 @@ export default function AdminPanelLayout({ children }: LayoutProps<"/admin">) {
       <Suspense fallback={<ShellSkeleton />}>
         <AdminShell>{children}</AdminShell>
       </Suspense>
+      <Toaster />
     </div>
   );
 }

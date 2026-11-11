@@ -5,6 +5,7 @@ import { Check, Copy } from "lucide-react";
 import type { ActionResult } from "@/lib/action-result";
 import { useFormAction } from "@/lib/use-form-action";
 import { cn } from "@/lib/utils";
+import { toast, useResultToast } from "./toaster";
 
 /** Form bound to an admin server action that returns { ok, message }. */
 export function ActionForm({
@@ -30,6 +31,7 @@ export function ActionForm({
     if (result?.ok && resetOnSuccess) formRef.current?.reset();
     return result;
   }, null);
+  useResultToast(state);
   return (
     <form
       ref={formRef}
@@ -47,14 +49,8 @@ export function ActionForm({
       <fieldset disabled={pending} className={cn("min-w-0", className)}>
         {children}
       </fieldset>
-      {state && (
-        <p
-          className={cn("mt-2 text-sm whitespace-pre-line", state.ok ? "text-success" : "text-danger")}
-          role={state.ok ? "status" : "alert"}
-        >
-          {state.message}
-        </p>
-      )}
+      {/* Errors also stay by the form, so it's clear what to fix; the toast announces them. */}
+      {state && !state.ok && <p className="mt-2 text-sm whitespace-pre-line text-danger">{state.message}</p>}
       {state?.secret && <SecretBox value={state.secret} />}
     </form>
   );
@@ -72,8 +68,10 @@ export function SecretBox({ value }: { value: string }) {
           try {
             await navigator.clipboard.writeText(value);
             setCopied(true);
+            toast.success("Copied to clipboard.");
           } catch {
             setCopied(false);
+            toast.error("Couldn't copy. Select the text and copy it by hand.");
           }
         }}
         className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-white px-3 text-sm font-semibold shadow-card"

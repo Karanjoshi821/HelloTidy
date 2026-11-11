@@ -11,6 +11,7 @@ import { BULK_ACTIONS, type BulkAction } from "@/lib/orders/labels";
 import { useFormAction } from "@/lib/use-form-action";
 import { cn, formatDateTime } from "@/lib/utils";
 import { PaymentBadge, StatusBadge, TagList } from "./status";
+import { useResultToast } from "./toaster";
 import { adminInput, adminSelect } from "./ui";
 
 export type OrderRow = Pick<
@@ -41,6 +42,9 @@ export function OrdersTable({ rows }: { rows: OrderRow[] }) {
     if (result?.ok) setSelected(new Set());
     return result;
   }, null);
+  useResultToast(state);
+  // Errors, and results that skipped some orders, also stay on screen.
+  const keepInline = state && (!state.ok || state.message.includes("\n"));
 
   const visibleIds = rows.map((r) => r.id);
   const allSelected = rows.length > 0 && visibleIds.every((id) => selected.has(id));
@@ -164,21 +168,15 @@ export function OrdersTable({ rows }: { rows: OrderRow[] }) {
           >
             <Printer className="size-4" /> Print slips
           </a>
-          {state && (
-            <p
-              className={cn("w-full text-sm whitespace-pre-line", state.ok ? "text-success" : "text-danger")}
-              role={state.ok ? "status" : "alert"}
-            >
+          {keepInline && (
+            <p className={cn("w-full text-sm whitespace-pre-line", state.ok ? "text-success" : "text-danger")}>
               {state.message}
             </p>
           )}
         </form>
       )}
-      {ids.length === 0 && state && (
-        <p
-          className={cn("px-5 py-3 text-sm whitespace-pre-line", state.ok ? "text-success" : "text-danger")}
-          role="status"
-        >
+      {ids.length === 0 && keepInline && (
+        <p className={cn("px-5 py-3 text-sm whitespace-pre-line", state.ok ? "text-success" : "text-danger")}>
           {state.message}
         </p>
       )}

@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { adjustStockAction, deletePackAction, updatePackAction } from "@/app/admin/product-actions";
 import { ActionForm } from "@/components/admin/action-form";
+import { FlashToast } from "@/components/admin/toaster";
 import { PackForm } from "@/components/admin/pack-form";
-import { adminInput, adminSelect, Card, DefinitionList, Notice, PageHeader } from "@/components/admin/ui";
+import { adminInput, adminSelect, Card, DefinitionList, PageHeader } from "@/components/admin/ui";
 import { buttonClasses } from "@/components/ui/button";
 import { Badge } from "@/components/ui/layout";
 import { product } from "@/config/products";
@@ -23,9 +24,9 @@ const REASON_LABELS: Record<string, string> = {
   cancelled: "Order cancelled",
 };
 
-export default async function PackPage({ params, searchParams }: PageProps<"/admin/products/[id]">) {
+export default async function PackPage({ params }: PageProps<"/admin/products/[id]">) {
   const user = await requireAdmin();
-  const [{ id }, sp] = await Promise.all([params, searchParams]);
+  const { id } = await params;
   const detail = await getPackAdmin(decodeURIComponent(id));
   if (!detail) notFound();
   const { pack, movements, sold30, orderCount, unitsAllTime } = detail;
@@ -33,7 +34,7 @@ export default async function PackPage({ params, searchParams }: PageProps<"/adm
 
   return (
     <div className="space-y-6">
-      {sp.created && <Notice tone="success">Pack added.</Notice>}
+      <FlashToast param="created" message="Pack added." />
       <PageHeader
         back={{ href: "/admin/products", label: "Products" }}
         title={pack.name}
