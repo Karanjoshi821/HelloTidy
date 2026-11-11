@@ -13,7 +13,13 @@ import {
   retryPaymentAction,
   switchToCodAction,
 } from "@/app/(site)/checkout/actions";
-import { trackPixel } from "@/lib/analytics/pixel";
+import {
+  goToOrderPage,
+  trackBeginCheckout,
+  trackPaymentChoice,
+  trackPinCheck,
+  trackPurchasePixel,
+} from "@/lib/analytics/track";
 import { findPack, type Storefront } from "@/lib/catalog/types";
 import { uuid } from "@/lib/client-id";
 import { INDIAN_STATES } from "@/lib/india";
@@ -22,6 +28,8 @@ import type { CheckoutPaymentOptions } from "@/lib/payments/flow";
 import { loadRazorpay, openRazorpay } from "@/lib/payments/razorpay-client";
 import { quote, QuoteError, type Coupon, type PaymentMethod, type Quote } from "@/lib/pricing";
 import { cn } from "@/lib/utils";
+import { getConsent } from "@/lib/consent";
+import { visitId } from "@/lib/visitors/tracker";
 import { checkoutSchema, fieldErrors, type CheckoutInput } from "@/lib/validation";
 import { readAttribution } from "../analytics/attribution";
 import { useCart, type CartLine } from "../cart/cart-context";
@@ -103,9 +111,11 @@ export function CheckoutForm({ onlinePayments, recoveryCalls }: { onlinePayments
   const [state, setState] = useState("");
   const [pinLookup, setPinLookup] = useState<"idle" | "loading" | "found" | "notfound">("idle");
   // What the couriers said about the typed pincode (null: not asked, or no answer).
-  const [pinCourier, setPinCourier] = useState<{ pin: string; serviceable: boolean | null; cod: boolean | null } | null>(
-    null,
-  );
+  const [pinCourier, setPinCourier] = useState<{
+    pin: string;
+    serviceable: boolean | null;
+    cod: boolean | null;
+  } | null>(null);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -144,13 +154,7 @@ export function CheckoutForm({ onlinePayments, recoveryCalls }: { onlinePayments
   useEffect(() => {
     if (tracked.current || !totals) return;
     tracked.current = true;
-    trackPixel("InitiateCheckout", {
-      content_ids: totals.lines.map((l) => l.sku),
-      content_type: "product",
-      currency: "INR",
-      value: totals.subtotal / 100,
-      num_items: totals.itemCount,
-    });
+    trackBeginCheckout(totals.lines, totals.subtotal, totals.itemCount);
   }, [totals]);
 
   function setLineQty(packId: string, qty: number) {
@@ -171,6 +175,7 @@ export function CheckoutForm({ onlinePayments, recoveryCalls }: { onlinePayments
     // Couriers are asked alongside the city lookup; neither waits for the other.
     void fetchDelivery(pin).then((d) => {
       if (!d?.ok) return;
+      trackPinCheck(pin, d.serviceable, d.cod, "checkout");
       setPinCourier({ pin, serviceable: d.serviceable, cod: d.cod });
       if (d.serviceable === false) setErrors((e) => ({ ...e, pincode: UNSERVICEABLE }));
       try {
@@ -224,22 +229,10 @@ export function CheckoutForm({ onlinePayments, recoveryCalls }: { onlinePayments
    * here, never on /order/…, whose URL must not reach third parties.
    */
   function complete(order: PendingPayment, confirmed: boolean) {
-    if (confirmed && totals) {
-      trackPixel(
-        "Purchase",
-        {
-          currency: "INR",
-          value: order.total / 100,
-          content_ids: totals.lines.map((l) => l.sku),
-          content_type: "product",
-          num_items: totals.itemCount,
-        },
-        order.orderNumber,
-      );
-    }
+    if (confirmed && totals) trackPurchasePixel(order.orderNumber, order.total, totals.lines, totals.itemCount);
     if (!buyNowLines) cart.clear();
     cartLead.forget();
-    router.push(`/order/${order.token}`);
+    goToOrderPage((url) => router.push(url), `/order/${order.token}`);
   }
 
   async function pay(order: PendingPayment, payment: CheckoutPaymentOptions) {
@@ -288,7 +281,8 @@ export function CheckoutForm({ onlinePayments, recoveryCalls }: { onlinePayments
       state: state as CheckoutInput["state"],
       pincode: text("pincode"),
       company: text("company"),
-      attribution: readAttribution(),
+      attribution: { ...readAttribution(), consent: getConsent() === "granted" ? "granted" : "denied" },
+      visitId: visitId(),
     };
 
     const local = checkoutSchema.safeParse(input);
@@ -308,6 +302,7 @@ export function CheckoutForm({ onlinePayments, recoveryCalls }: { onlinePayments
 
     setErrors({});
     setFormError(null);
+    trackPaymentChoice(method, totals.lines, totals.total);
     startTransition(async () => {
       const result = await placeOrderAction(input);
       if (!result.ok) {
@@ -391,6 +386,8 @@ export function CheckoutForm({ onlinePayments, recoveryCalls }: { onlinePayments
       ref={formRef}
       onSubmit={onSubmit}
       noValidate
+      // Hides names, phone and address from Microsoft Clarity recordings.
+      data-clarity-mask="true"
       className="relative grid gap-8 lg:grid-cols-[1fr_400px] lg:items-start"
     >
       <Honeypot />
@@ -566,9 +563,9 @@ export function CheckoutForm({ onlinePayments, recoveryCalls }: { onlinePayments
                   ? "Not available for this pincode. Please pay online"
                   : !codAvailable
                     ? `Available on orders up to ${formatPaise(storefront.codMaxOrderValue)}`
-                  : codFeePaise > 0
-                    ? `+${formatPaise(codFeePaise)} COD charge · pay when it arrives`
-                    : "Pay when it arrives"
+                    : codFeePaise > 0
+                      ? `+${formatPaise(codFeePaise)} COD charge · pay when it arrives`
+                      : "Pay when it arrives"
               }
             />
           </div>

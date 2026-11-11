@@ -41,7 +41,8 @@ export function shiprocketConfig() {
   if (!email || !password || !pickupPincode || !/^[1-9]\d{5}$/.test(pickupPincode)) return null;
   const pickupLocation = read("SHIPROCKET_PICKUP_LOCATION");
   const sync = read("SHIPROCKET_SYNC_ORDERS");
-  const syncOrders = Boolean(pickupLocation) && (sync === "1" || (sync !== "0" && process.env.VERCEL_ENV === "production"));
+  const syncOrders =
+    Boolean(pickupLocation) && (sync === "1" || (sync !== "0" && process.env.VERCEL_ENV === "production"));
   return { email, password, pickupPincode, pickupLocation, syncOrders };
 }
 
@@ -95,6 +96,26 @@ export function recoveryConfig() {
 
 export function isRecoveryEnabled(): boolean {
   return recoveryConfig() !== null;
+}
+
+/**
+ * Google Analytics 4. The browser tag needs NEXT_PUBLIC_GA_MEASUREMENT_ID; the
+ * server-side purchase (Measurement Protocol) also needs GA_API_SECRET
+ * (GA4 → Admin → Data streams → the web stream → Measurement Protocol API secrets).
+ */
+export function ga4Config() {
+  const measurementId = read("NEXT_PUBLIC_GA_MEASUREMENT_ID");
+  if (!measurementId || !/^G-[A-Z0-9]{4,16}$/.test(measurementId)) return null;
+  return { measurementId, apiSecret: read("GA_API_SECRET") };
+}
+
+/** Site verification meta tags, for owners who verify by tag instead of DNS. */
+export function siteVerification() {
+  return {
+    google: read("GOOGLE_SITE_VERIFICATION"),
+    bing: read("BING_SITE_VERIFICATION"),
+    facebook: read("FACEBOOK_DOMAIN_VERIFICATION"),
+  };
 }
 
 export function metaCapiConfig() {

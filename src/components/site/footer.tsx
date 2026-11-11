@@ -1,5 +1,7 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { cacheLife } from "next/cache";
+import { CookieSettingsButton } from "@/components/consent/cookie-settings-button";
 import { product } from "@/config/products";
 import { isPlaceholder, siteConfig } from "@/config/site";
 import { Logo } from "./header";
@@ -30,18 +32,29 @@ async function CurrentYear() {
   return <>{new Date().getFullYear()}</>;
 }
 
-function LinkColumn({ title, links }: { title: string; links: { href: string; label: string }[] }) {
+const linkClass = "text-sm text-white/75 transition-colors hover:text-white";
+
+function LinkColumn({
+  title,
+  links,
+  extra,
+}: {
+  title: string;
+  links: { href: string; label: string }[];
+  extra?: ReactNode;
+}) {
   return (
     <div>
       <h2 className="mb-3 text-sm font-bold">{title}</h2>
       <ul className="space-y-2">
         {links.map((link) => (
           <li key={link.href}>
-            <Link href={link.href} className="text-sm text-white/75 transition-colors hover:text-white">
+            <Link href={link.href} className={linkClass}>
               {link.label}
             </Link>
           </li>
         ))}
+        {extra && <li>{extra}</li>}
       </ul>
     </div>
   );
@@ -76,7 +89,7 @@ export function Footer() {
         </div>
         <LinkColumn title="Shop" links={shopLinks} />
         <LinkColumn title="Help" links={helpLinks} />
-        <LinkColumn title="Legal" links={legalLinks} />
+        <LinkColumn title="Legal" links={legalLinks} extra={<CookieSettingsButton className={linkClass} />} />
       </div>
       <div className="border-t border-white/15">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-6 text-xs text-white/75 sm:px-6 md:flex-row md:items-center md:justify-between">

@@ -3,7 +3,7 @@ import { product } from "@/config/products";
 import { reviews } from "@/config/reviews";
 import { isPlaceholder, siteConfig } from "@/config/site";
 import { publishedVideoReviews, videoReviews } from "@/config/video-reviews";
-import { emailConfig, metaCapiConfig, razorpayConfig, telegramConfig } from "./env";
+import { emailConfig, ga4Config, metaCapiConfig, razorpayConfig, telegramConfig } from "./env";
 
 /**
  * The admin's setup guide: what's still missing before running ads. Mirrors
@@ -86,6 +86,22 @@ export function getLaunchChecklist(opts: { stockTracked: boolean }): ChecklistIt
       done: Boolean(metaCapiConfig()),
       required: false,
       help: "Add NEXT_PUBLIC_META_PIXEL_ID and META_CAPI_ACCESS_TOKEN before running Meta ads.",
+    },
+    {
+      id: "ga4",
+      label: "Google Analytics 4",
+      done: Boolean(ga4Config()?.apiSecret),
+      required: false,
+      help: ga4Config()
+        ? "Measurement ID is set. Add GA_API_SECRET so purchases are sent from the server too."
+        : "Add NEXT_PUBLIC_GA_MEASUREMENT_ID and GA_API_SECRET (GA4 → Admin → Data streams).",
+    },
+    {
+      id: "clarity",
+      label: "Microsoft Clarity (heatmaps)",
+      done: /^[a-z0-9]{6,20}$/i.test(process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID?.trim() ?? ""),
+      required: false,
+      help: "Add NEXT_PUBLIC_CLARITY_PROJECT_ID to see heatmaps and recordings of visitors who accept cookies.",
     },
     {
       id: "email",

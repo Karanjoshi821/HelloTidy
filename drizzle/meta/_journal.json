@@ -43,6 +43,13 @@
       "when": 1794332965162,
       "tag": "0005_shiprocket_sync",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794376915426,
+      "tag": "0006_visitors",
+      "breakpoints": true
     }
   ]
 }

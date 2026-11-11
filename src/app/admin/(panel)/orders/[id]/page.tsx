@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import type { ComponentProps } from "react";
+import { Suspense, type ComponentProps } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Ban, CheckCircle2, Phone, Printer, Receipt, TriangleAlert, UserRound } from "lucide-react";
@@ -17,6 +17,7 @@ import {
 } from "@/app/admin/order-actions";
 import { ActionForm } from "@/components/admin/action-form";
 import { FlashToast } from "@/components/admin/toaster";
+import { OrderVisitCard } from "@/components/admin/order-visit-card";
 import { RecoveryButton } from "@/components/admin/recovery-button";
 import { PaymentBadge, StatusBadge, TagList } from "@/components/admin/status";
 import { adminInput, adminSelect, adminTextarea, Card, Notice, PageHeader } from "@/components/admin/ui";
@@ -68,7 +69,11 @@ export default async function OrderDetailPage({ params }: PageProps<"/admin/orde
   const remaining = order.total - order.refundedAmount;
   const address = [order.address1, order.address2, order.landmark].filter(Boolean).join(", ");
   const recoveries = events.filter((e) => e.type === "recovery_sent").length;
-  const attribution = Object.entries(order.attribution ?? {}).filter(([, v]) => v);
+  // The cookie choice and Google ids are shown in "How they found us", not as raw values.
+  const attribution = Object.entries(order.attribution ?? {}).filter(
+    ([k, v]) => v && !["consent", "gaClientId", "gaSessionId"].includes(k),
+  );
+  const cookieChoice = order.attribution?.consent;
 
   return (
     <div className="space-y-6">
@@ -688,6 +693,10 @@ export default async function OrderDetailPage({ params }: PageProps<"/admin/orde
             </Card>
           )}
 
+          <Suspense fallback={null}>
+            <OrderVisitCard order={order} className="order-10" />
+          </Suspense>
+
           <Card title="Details" className="order-10">
             <dl className="space-y-1.5 text-xs">
               <Detail label="Source" value={order.source === "admin" ? "Created by staff" : "Website checkout"} />
@@ -701,6 +710,7 @@ export default async function OrderDetailPage({ params }: PageProps<"/admin/orde
               {attribution.map(([k, v]) => (
                 <Detail key={k} label={k} value={String(v)} />
               ))}
+              {cookieChoice && <Detail label="Cookies" value={cookieChoice === "granted" ? "Accepted" : "Declined"} />}
               {isOwner && order.clientIp && <Detail label="IP" value={order.clientIp} mono />}
             </dl>
           </Card>

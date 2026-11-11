@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { siteConfig } from "@/config/site";
 import { adminThemeScript } from "@/lib/admin-theme";
+import { siteVerification } from "@/lib/env";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -9,6 +10,12 @@ const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   display: "swap",
 });
+
+/** Optional: only for owners who verify Google, Bing or Meta with a tag instead of a DNS record. */
+const verify = siteVerification();
+const verificationTags: Record<string, string> = {};
+if (verify.bing) verificationTags["msvalidate.01"] = verify.bing;
+if (verify.facebook) verificationTags["facebook-domain-verification"] = verify.facebook;
 
 const defaultTitle = `${siteConfig.name}: Magic Eraser Sponge | Erase Stains with Just Water`;
 
@@ -37,6 +44,7 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: defaultTitle, description: siteConfig.shortDescription },
   robots: { index: true, follow: true },
   formatDetection: { telephone: false },
+  verification: { ...(verify.google ? { google: verify.google } : {}), other: verificationTags },
 };
 
 export const viewport: Viewport = {

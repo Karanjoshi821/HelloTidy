@@ -204,8 +204,13 @@ export const policies: Policy[] = [
             name, mobile number and cart before you place the order, and a short summary of any call we make to you.
           </li>
           <li>
-            <strong>Technical data:</strong> IP address, browser and device type, the ad or link that brought you here
-            (UTM tags), and cookies such as Meta Pixel cookies. Your cart is saved in your own browser.
+            <strong>Visit data:</strong> the pages you view on our site, how long you spend on them, actions such as
+            checking a PIN code or adding to cart, your device type and browser, your approximate city and state
+            (estimated from your network), and the ad or link that brought you here. What else we keep depends on your
+            cookie choice; see &ldquo;Cookies and analytics&rdquo; below. Your cart is saved in your own browser.
+          </li>
+          <li>
+            <strong>Order technical data:</strong> the IP address and browser used to place an order, to prevent fraud.
           </li>
         </ul>
 
@@ -222,8 +227,12 @@ export const policies: Policy[] = [
           <li>To prevent fraud and fake orders (for example, Cash on Delivery abuse).</li>
           <li>To meet legal, tax and accounting obligations.</li>
           <li>
-            To measure and improve our advertising. We use the Meta Pixel and Meta Conversions API, which share purchase
-            events with Meta. Your phone number and email are hashed (irreversibly scrambled) before being shared.
+            To understand which pages and ads work, and to improve the store (see &ldquo;Cookies and analytics&rdquo;).
+          </li>
+          <li>
+            Only if you accepted cookies: to measure our advertising. Your purchase is shared with Meta (Meta Pixel and
+            Conversions API) and Google Analytics. Your phone number and email are hashed (irreversibly scrambled)
+            before being shared with Meta.
           </li>
         </ul>
         <p>We do not sell your personal data.</p>
@@ -232,7 +241,10 @@ export const policies: Policy[] = [
         <ul>
           <li>Logistics partners and couriers (name, phone, address) to deliver your order.</li>
           <li>Razorpay, our payment gateway, to process payments and refunds.</li>
-          <li>Meta Platforms, for ad measurement as described above.</li>
+          <li>
+            Only if you accepted cookies: Meta Platforms (ad measurement), Google (Google Analytics) and Microsoft
+            (Microsoft Clarity), as described in &ldquo;Cookies and analytics&rdquo;.
+          </li>
           <li>
             If you agreed to a cart call: our calling, speech and AI providers (Plivo, Sarvam AI and Anthropic), who
             place the call and process its audio and transcript for us, and WhatsApp (Meta) if we message you.
@@ -241,18 +253,44 @@ export const policies: Policy[] = [
           <li>Government authorities, only when required by law.</li>
         </ul>
 
+        <h2 id="cookies">Cookies and analytics</h2>
+        <p>
+          When you first visit, we ask whether you accept cookies. You can change your answer at any time with
+          &ldquo;Cookie settings&rdquo; at the bottom of every page.
+        </p>
+        <ul>
+          <li>
+            <strong>If you decline (or don&rsquo;t answer):</strong> we count your visit anonymously with our own tools:
+            the pages you view, time on page, actions, device type and approximate location. We set no tracking cookie
+            and keep no IP address, and your visits aren&rsquo;t linked to each other. If you place an order, the visit
+            you ordered in is kept with your order. Google Analytics, Microsoft Clarity and the Meta Pixel are not
+            loaded, and your purchase isn&rsquo;t shared with Meta or Google.
+          </li>
+          <li>
+            <strong>If you accept:</strong> we set a first-party cookie (hellotidy_vid) that links your visits, and we
+            keep your IP address, PIN area and phone model with them. We also load Google Analytics (visit statistics),
+            Microsoft Clarity (heatmaps and session recordings, with what you type and your order details hidden) and
+            the Meta Pixel (ad measurement), which set their own cookies.
+          </li>
+          <li>
+            <strong>Always:</strong> your cart, cookie choice and the ad link you arrived from are stored in your own
+            browser, and staff sign-in uses a cookie for staff only.
+          </li>
+        </ul>
+
         <h2>How long we keep it</h2>
         <p>
           We keep order records for as long as tax and accounting laws require. Contact messages are kept for up to 24
           months. Unfinished-checkout details are kept for up to 90 days; if you asked us not to call, we keep only your
-          number, so that we never call it again. Technical and analytics data is kept for up to 12 months.
+          number, so that we never call it again. Visit data is deleted 12 months after your last visit.
         </p>
 
         <h2>Your rights</h2>
         <p>
           You can ask to access, correct or erase your personal data, or withdraw consent for marketing, by contacting
-          us. We may need to keep some order data where the law requires it. You can also block cookies in your browser
-          and manage ad preferences in your Meta account settings.
+          us. We may need to keep some order data where the law requires it. You can withdraw cookie consent at any time
+          with &ldquo;Cookie settings&rdquo;; we then delete the cookie and the identifying details kept with your
+          visits. You can also block cookies in your browser and manage ad preferences in your Meta account settings.
         </p>
 
         <h2>Security</h2>
@@ -298,8 +336,8 @@ export const policies: Policy[] = [
         <h2>Prices and payment</h2>
         <ul>
           <li>
-            Prices are in Indian Rupees and {siteConfig.gstin ? "include GST" : "are final, with no tax added"}. Delivery
-            is free.
+            Prices are in Indian Rupees and {siteConfig.gstin ? "include GST" : "are final, with no tax added"}.
+            Delivery is free.
           </li>
           <li>
             A Cash on Delivery charge of {formatPaise(codFee)} applies to COD orders and is shown before you order. COD

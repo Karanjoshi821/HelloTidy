@@ -1,8 +1,8 @@
 # QA report
 
-Run 2026-11-09 13:55 UTC against `http://localhost:3417` (production build, real Chrome). Checklist: [QA-CHECKLIST.md](QA-CHECKLIST.md).
+Run 2026-11-11 06:43 UTC against `http://localhost:3423` (production build, real Chrome). Checklist: [QA-CHECKLIST.md](QA-CHECKLIST.md).
 
-**76 / 76 checks passed.**
+**82 / 82 checks passed.**
 
 | ID | Check | Result |
 |---|---|---|
@@ -25,8 +25,8 @@ Run 2026-11-09 13:55 UTC against `http://localhost:3417` (production build, real
 | C5 | Sticky bar on the first screen, hidden while Buy is visible, back after it | ✅ Pass |
 | C6 | Buy now opens checkout with the pack and quantity | ✅ Pass |
 | C7 | Add to cart adds the item and opens the cart | ✅ Pass |
-| C8 | Sample-review notice and 'sample reviews' label are shown | ✅ Pass |
-| C9 | Review photo lightbox | ✅ Pass |
+| C8 | Sample reviews are never shown (no section, rating or menu link) | ✅ Pass |
+| C9 | Review photo lightbox (only when genuine reviews have photos) | ✅ Pass |
 | C11 | Before/after slider works with mouse drag and keyboard | ✅ Pass |
 | C10 | No ratings from sample reviews in structured data | ✅ Pass |
 | D1 | Cart quantity, limit, remove and empty state | ✅ Pass |
@@ -58,6 +58,11 @@ Run 2026-11-09 13:55 UTC against `http://localhost:3417` (production build, real
 | I1 | Security headers present | ✅ Pass |
 | I2 | Admin requires login; export refused without a session | ✅ Pass |
 | I3 | Wrong password refused; 6th failure blocked | ✅ Pass |
+| K1@390 | Cookie banner: asks once, Decline is respected, Cookie settings reopens it | ✅ Pass |
+| K1@1440 | Cookie banner: asks once, Decline is respected, Cookie settings reopens it | ✅ Pass |
+| K2 | Privacy policy explains cookies and analytics | ✅ Pass |
+| K3 | A shopper who accepts: cookie set, visit and order recorded (checked in J20) | ✅ Pass |
+| K4 | Product feeds for Google Merchant Center and Meta | ✅ Pass |
 | J1 | Home: to-do queue, sales, setup guide and recent orders | ✅ Pass |
 | J2 | Orders: search, work-queue tabs and filters; double click made one order | ✅ Pass |
 | J3 | Order: verify COD, comment, tags, pack, ship with tracking, notes | ✅ Pass |
@@ -78,6 +83,7 @@ Run 2026-11-09 13:55 UTC against `http://localhost:3417` (production build, real
 | J17 | Packing slip and receipt print pages | ✅ Pass |
 | J18 | Staff: invite, forced password change, limited access, deactivate | ✅ Pass |
 | J19 | Activity log records catalogue, discount, settings, staff and sign-ins | ✅ Pass |
+| J20 | Visitors: overview, funnel, sources, list, timeline and the order's source | ✅ Pass |
 | J20 | Every admin page at 390 and 1440 px: loads, fits, one h1, nothing covered, no errors | ✅ Pass |
 | J21 | Phone menu opens, navigates, closes on navigation and Escape | ✅ Pass |
 | H3 | axe-core on every admin page: no critical/serious violations | ✅ Pass |

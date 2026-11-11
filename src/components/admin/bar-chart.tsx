@@ -10,11 +10,13 @@ export function BarChart({
   format,
   caption,
   className,
+  emptyText = "No sales in this period yet",
 }: {
   data: { label: string; short: string; value: number }[];
   format: (value: number) => string;
   caption: string;
   className?: string;
+  emptyText?: string;
 }) {
   const max = Math.max(0, ...data.map((d) => d.value));
   const every = Math.max(1, Math.ceil(data.length / 6));
@@ -34,7 +36,7 @@ export function BarChart({
         </div>
         {max === 0 && (
           <p className="absolute inset-0 grid place-items-center text-sm text-muted" aria-hidden="true">
-            No sales in this period yet
+            {emptyText}
           </p>
         )}
       </div>

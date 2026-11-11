@@ -6,6 +6,7 @@ import { siteConfig, whatsappLink } from "@/config/site";
 import { courierDeliveryRange, deliveryWindow, formatDeliveryDate, indiaDateKey } from "@/lib/delivery";
 import { DeliveryEstimate } from "./delivery-estimate";
 import { buttonClasses } from "../ui/button";
+import { trackPinCheck } from "@/lib/analytics/track";
 
 /** Shared with checkout, so a pincode typed here is remembered there. */
 export const PINCODE_KEY = "hellotidy_pincode_v1";
@@ -78,7 +79,10 @@ export function DeliveryCheck() {
     setLoading(true);
     const result = await fetchDelivery(value);
     setLoading(false);
-    if (result) show(value, result);
+    if (result) {
+      if (result.ok) trackPinCheck(value, result.serviceable, result.cod, "product");
+      show(value, result);
+    }
   }
 
   // Check the remembered pincode once, on arrival.

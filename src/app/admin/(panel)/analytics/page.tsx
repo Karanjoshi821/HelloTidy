@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import type { ReactNode } from "react";
 import { BarChart, shortLabel } from "@/components/admin/bar-chart";
+import { DataTable as Table } from "@/components/admin/data-table";
 import { adminInput, Card, PageHeader, percentChange, StatCard } from "@/components/admin/ui";
 import { buttonClasses } from "@/components/ui/button";
 import { requireOwner } from "@/lib/auth/dal";
@@ -220,35 +220,6 @@ export default async function AnalyticsPage({ searchParams }: PageProps<"/admin/
         Visits and conversion rate come from your ads tools: Meta Events Manager (Pixel + Conversions API) shows views,
         add-to-carts and purchases per campaign.
       </p>
-    </div>
-  );
-}
-
-function Table({ head, rows }: { head: string[]; rows: ReactNode[][] }) {
-  return (
-    <div className="-mx-1 overflow-x-auto">
-      <table className="w-full min-w-[16rem] text-sm">
-        <thead>
-          <tr className="border-b border-line text-left text-xs text-muted">
-            {head.map((h, i) => (
-              <th key={i} scope="col" className={cn("px-1 py-2 font-semibold", i > 0 && "text-right")}>
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-line">
-          {rows.map((row, i) => (
-            <tr key={i}>
-              {row.map((cell, j) => (
-                <td key={j} className={cn("px-1 py-2", j > 0 && "text-right tabular-nums")}>
-                  {cell}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }

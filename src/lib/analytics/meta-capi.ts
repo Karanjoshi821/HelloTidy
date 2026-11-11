@@ -17,6 +17,8 @@ const compact = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, "")
 export async function sendPurchaseEvent(order: OrderWithItems): Promise<void> {
   const cfg = metaCapiConfig();
   if (!cfg) return;
+  // Shared with Meta only for buyers who accepted cookies, as the privacy policy says.
+  if (order.attribution?.consent !== "granted") return;
 
   const [firstName, ...rest] = order.customerName.trim().split(/\s+/);
   const lastName = rest.join(" ");

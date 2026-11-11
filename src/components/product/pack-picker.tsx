@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { createContext, use, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { ArrowRight, Check, Minus, Plus, ShoppingBag, Zap } from "lucide-react";
 import { commerce } from "@/config/products";
-import { trackPixel } from "@/lib/analytics/pixel";
+import { trackAddToCart, trackPackSelect, trackViewItem } from "@/lib/analytics/track";
 import { badgeTone, discountPercent, findPack, perPiece, type Pack } from "@/lib/catalog/types";
 import { formatPaise } from "@/lib/money";
 import { quote } from "@/lib/pricing";
@@ -42,9 +42,19 @@ export function PackSelectionProvider({ children }: { children: ReactNode }) {
     (fromUrl?.available ? fromUrl : undefined) ??
     findPack(storefront, storefront.defaultPackId) ??
     null;
+  const choosePack = (id: string) => {
+    setPackId(id);
+    const chosen = findPack(storefront, id);
+    if (chosen && chosen.id !== pack?.id) trackPackSelect(chosen);
+  };
   return (
     <SelectionContext
-      value={{ pack, setPackId, qty, setQty: (q) => setQty(Math.min(Math.max(1, q), commerce.maxQtyPerPack)) }}
+      value={{
+        pack,
+        setPackId: choosePack,
+        qty,
+        setQty: (q) => setQty(Math.min(Math.max(1, q), commerce.maxQtyPerPack)),
+      }}
     >
       {children}
     </SelectionContext>
@@ -239,23 +249,15 @@ function useBuyActions() {
   const router = useRouter();
   const cart = useCart();
 
-  const track = (p: Pack) =>
-    trackPixel("AddToCart", {
-      content_ids: [p.sku],
-      content_type: "product",
-      currency: "INR",
-      value: (p.price * qty) / 100,
-    });
-
   return {
     buyNow: () => {
       if (!pack?.available) return;
-      track(pack);
+      trackAddToCart(pack, qty, "buy_now");
       router.push(`/checkout?pack=${encodeURIComponent(pack.id)}&qty=${qty}`);
     },
     addToCart: () => {
       if (!pack?.available) return;
-      track(pack);
+      trackAddToCart(pack, qty, "cart");
       cart.add(pack.id, qty);
       cart.open();
     },
@@ -377,13 +379,7 @@ export function ViewContentEvent() {
   useEffect(() => {
     if (tracked.current) return;
     tracked.current = true;
-    const main = findPack(storefront, storefront.defaultPackId);
-    trackPixel("ViewContent", {
-      content_ids: storefront.packs.map((p) => p.sku),
-      content_type: "product",
-      currency: "INR",
-      ...(main ? { value: main.price / 100 } : {}),
-    });
+    trackViewItem(storefront.packs, findPack(storefront, storefront.defaultPackId));
   }, [storefront]);
   return null;
 }

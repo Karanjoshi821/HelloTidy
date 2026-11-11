@@ -4,17 +4,18 @@ const isDev = process.env.NODE_ENV === "development";
 
 /**
  * Content Security Policy. Script and connection origins are allowlisted:
- * Razorpay Checkout, Meta Pixel, and Vercel's preview toolbar.
+ * Razorpay Checkout, Meta Pixel, Google Analytics 4, Microsoft Clarity and
+ * Vercel's preview toolbar. The analytics tags only load after cookie consent.
  * 'unsafe-inline' is kept for scripts because nonces would force every page
  * to render dynamically (no static shell, slower store).
  */
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://checkout.razorpay.com https://*.razorpay.com https://connect.facebook.net https://vercel.live`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://checkout.razorpay.com https://*.razorpay.com https://connect.facebook.net https://www.googletagmanager.com https://*.clarity.ms https://c.bing.com https://vercel.live`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://*.razorpay.com https://www.facebook.com https://*.facebook.com https://vercel.live https://vercel.com",
+  "img-src 'self' data: blob: https://*.razorpay.com https://www.facebook.com https://*.facebook.com https://*.google-analytics.com https://www.googletagmanager.com https://*.clarity.ms https://c.bing.com https://vercel.live https://vercel.com",
   "font-src 'self' data: https://vercel.live",
-  `connect-src 'self' https://*.razorpay.com https://www.facebook.com https://connect.facebook.net https://vercel.live wss://ws-us3.pusher.com${isDev ? " ws: http://localhost:*" : ""}`,
+  `connect-src 'self' https://*.razorpay.com https://www.facebook.com https://connect.facebook.net https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://*.clarity.ms https://c.bing.com https://vercel.live wss://ws-us3.pusher.com${isDev ? " ws: http://localhost:*" : ""}`,
   "frame-src https://api.razorpay.com https://checkout.razorpay.com https://*.razorpay.com https://vercel.live",
   "worker-src 'self' blob:",
   "object-src 'none'",

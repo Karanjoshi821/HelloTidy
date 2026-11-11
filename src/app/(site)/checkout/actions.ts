@@ -15,7 +15,10 @@ import {
 } from "@/lib/payments/flow";
 import { RazorpayError } from "@/lib/payments/razorpay";
 import type { Coupon } from "@/lib/pricing";
-import { isRecoveryEnabled } from "@/lib/env";
+import { gaClientIdFromCookie, gaSessionCookieName, gaSessionIdFromCookie } from "@/lib/analytics/ga-cookies";
+import { ga4Config, isRecoveryEnabled } from "@/lib/env";
+import { VISITOR_COOKIE } from "@/lib/visitors/cookie";
+import { linkOrderToVisit } from "@/lib/visitors/service";
 import { saveCartLead, sendCartLeadWebhook, withdrawCartLead } from "@/lib/recovery/service";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { getRequestContext } from "@/lib/security/request";
@@ -59,14 +62,40 @@ export async function placeOrderAction(input: CheckoutInput): Promise<PlaceOrder
   let ref: OrderRef | undefined;
   try {
     const jar = await cookies();
-    const { order, created, stock } = await placeOrder(parsed.data, {
-      ip: ctx.ip,
-      userAgent: ctx.userAgent,
-      fbp: jar.get("_fbp")?.value,
-      fbc: jar.get("_fbc")?.value,
-    });
+    const consent = parsed.data.attribution?.consent === "granted";
+    const measurementId = ga4Config()?.measurementId;
+    // Only kept with consent; the browser can't supply its own values.
+    const attribution = {
+      ...parsed.data.attribution,
+      gaClientId: consent ? gaClientIdFromCookie(jar.get("_ga")?.value) : undefined,
+      gaSessionId:
+        consent && measurementId
+          ? gaSessionIdFromCookie(jar.get(gaSessionCookieName(measurementId))?.value)
+          : undefined,
+    };
+    const { order, created, stock } = await placeOrder(
+      { ...parsed.data, attribution },
+      {
+        ip: ctx.ip,
+        userAgent: ctx.userAgent,
+        fbp: consent ? jar.get("_fbp")?.value : undefined,
+        fbc: consent ? jar.get("_fbc")?.value : undefined,
+      },
+    );
     applyStockEffect(stock);
     ref = { orderToken: order.publicToken, orderNumber: order.orderNumber, total: order.total };
+    if (created) {
+      const link = {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        customerId: order.customerId,
+        total: order.total,
+        sid: parsed.data.visitId,
+        consent,
+        cookieId: jar.get(VISITOR_COOKIE)?.value ?? null,
+      };
+      after(() => linkOrderToVisit(link));
+    }
 
     if (order.paymentMethod === "cod") {
       if (created) after(() => notifyOrderConfirmed(order));

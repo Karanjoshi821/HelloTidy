@@ -29,7 +29,12 @@ export function TrackForm() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="space-y-4 rounded-3xl border border-line p-6" noValidate>
+      <form
+        onSubmit={onSubmit}
+        className="space-y-4 rounded-3xl border border-line p-6"
+        noValidate
+        data-clarity-mask="true"
+      >
         <Field
           label="Order number"
           name="orderNumber"
@@ -74,7 +79,7 @@ function TrackResult({ order }: { order: Extract<TrackState, { status: "found" }
   const ended = order.status === "cancelled" || order.status === "rto";
 
   return (
-    <section className="rounded-3xl border border-line p-6" aria-live="polite">
+    <section className="rounded-3xl border border-line p-6" aria-live="polite" data-clarity-mask="true">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-lg font-bold">Order {order.orderNumber}</h2>
         <p className="text-sm text-muted">Placed {formatDateTime(order.createdAt)}</p>

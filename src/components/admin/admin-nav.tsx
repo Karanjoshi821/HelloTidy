@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
+  Activity,
   ChartColumn,
   ExternalLink,
   House,
@@ -37,10 +38,14 @@ type Item = {
   alert?: boolean;
   ownerOnly?: boolean;
   child?: boolean;
+  /** Only this exact path, so a parent isn't highlighted with its child. */
+  exact?: boolean;
+  /** Other pages that belong to this item. */
+  also?: RegExp;
 };
 
-function isActive(pathname: string, href: string): boolean {
-  if (href === "/admin") return pathname === "/admin";
+function isActive(pathname: string, href: string, exact?: boolean): boolean {
+  if (href === "/admin" || exact) return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -78,6 +83,15 @@ export function AdminNav({
         { href: "/admin/customers", label: "Customers", icon: Users },
         { href: "/admin/discounts", label: "Discounts", icon: TicketPercent, ownerOnly: true },
         { href: "/admin/analytics", label: "Analytics", icon: ChartColumn, ownerOnly: true },
+        { href: "/admin/visitors", label: "Visitors", icon: Activity, ownerOnly: true, exact: true },
+        {
+          href: "/admin/visitors/all",
+          label: "Visitor list",
+          icon: Users,
+          ownerOnly: true,
+          child: true,
+          also: /^\/admin\/visitors\/[0-9a-f-]{36}$/,
+        },
         { href: "/admin/messages", label: "Messages", icon: MessageSquare, count: counts.newMessages, alert: true },
         { href: "/admin/settings", label: "Settings", icon: Settings, ownerOnly: true },
       ].filter((item) => !item.ownerOnly || role === "owner");
@@ -100,7 +114,7 @@ export function AdminNav({
     <nav aria-label="Admin" className="flex-1 overflow-y-auto px-3 py-4">
       <ul className="space-y-0.5">
         {items.map((item) => {
-          const active = isActive(pathname, item.href);
+          const active = isActive(pathname, item.href, item.exact) || Boolean(item.also?.test(pathname));
           const Icon = item.icon;
           return (
             <li key={item.href}>

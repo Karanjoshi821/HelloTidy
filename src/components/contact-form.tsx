@@ -22,7 +22,7 @@ export function ContactForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="relative space-y-4" noValidate>
+    <form onSubmit={onSubmit} className="relative space-y-4" noValidate data-clarity-mask="true">
       <Honeypot />
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Your name" name="name" error={errors.name}>

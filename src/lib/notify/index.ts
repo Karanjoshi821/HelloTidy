@@ -1,4 +1,5 @@
 import "server-only";
+import { sendGa4Purchase } from "../analytics/ga4";
 import { sendPurchaseEvent } from "../analytics/meta-capi";
 import type { PaidResult } from "../orders/service";
 import { sendOrderConfirmationEmail, sendOwnerAlertEmail, sendOwnerOrderEmail } from "./email";
@@ -20,8 +21,9 @@ export async function notifyOrderConfirmed(order: OrderWithItems): Promise<void>
     sendOwnerOrderEmail(order),
     sendPurchaseEvent(order),
     syncOrderToShiprocket(order.id),
+    sendGa4Purchase(order),
   ]);
-  const channels = ["telegram", "webhook", "customer-email", "owner-email", "meta-capi", "shiprocket"];
+  const channels = ["telegram", "webhook", "customer-email", "owner-email", "meta-capi", "shiprocket", "ga4"];
   results.forEach((result, i) => {
     if (result.status === "rejected") {
       console.error(`[notify] ${channels[i]} failed for ${order.orderNumber}:`, result.reason);

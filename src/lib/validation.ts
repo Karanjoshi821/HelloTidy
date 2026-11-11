@@ -87,8 +87,15 @@ export const checkoutSchema = z.object({
       utmTerm: attributionValue,
       landingPath: z.string().trim().max(300).optional(),
       referrer: z.string().trim().max(300).optional(),
+      /** The cookie choice when ordering: Meta and Google get the purchase only when "granted". */
+      consent: z.enum(["granted", "denied"]).optional(),
+      /** Set by the server from the _ga cookie; anything the browser sends is replaced. */
+      gaClientId: attributionValue,
+      gaSessionId: attributionValue,
     })
     .optional(),
+  /** The browser's visit id (src/lib/visitors), to link the order to its visit. */
+  visitId: z.uuid().optional(),
 });
 
 export type CheckoutInput = z.input<typeof checkoutSchema>;

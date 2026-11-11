@@ -114,6 +114,10 @@ export const orders = pgTable(
     refundedAmount: integer("refunded_amount").notNull().default(0),
     /** For manual orders paid outside Razorpay, e.g. a UPI transaction id. */
     paymentReference: text("payment_reference"),
+    /** The visit the order was placed in (src/lib/visitors). */
+    visitId: uuid("visit_id").references(() => visitorSessions.id, { onDelete: "set null" }),
+    /** Only when the buyer accepted cookies: links every earlier visit of theirs. */
+    visitorId: uuid("visitor_id").references(() => visitors.id, { onDelete: "set null" }),
 
     confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
     paidAt: timestamp("paid_at", { withTimezone: true }),
@@ -134,6 +138,8 @@ export const orders = pgTable(
     index("orders_phone_idx").on(t.phone),
     index("orders_customer_idx").on(t.customerId, t.createdAt),
     index("orders_coupon_idx").on(t.couponCode),
+    index("orders_visit_idx").on(t.visitId),
+    index("orders_visitor_idx").on(t.visitorId),
   ],
 );
 
@@ -444,6 +450,122 @@ export const auditLog = pgTable(
   (t) => [index("audit_log_created_idx").on(t.createdAt), index("audit_log_entity_idx").on(t.entityType, t.entityId)],
 );
 
+/**
+ * Website visitors, recorded by our own tracker (src/lib/visitors). Without
+ * cookie consent each visit is its own anonymous visitor (keyed by the visit
+ * id, no cookie, no IP). With consent, a first-party cookie links visits and
+ * the IP, PIN area and phone model are kept. Deleted 12 months after last seen.
+ */
+export const visitors = pgTable(
+  "visitors",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /** The visit id of an anonymous visitor; null once they accept cookies. */
+    anonKey: text("anon_key"),
+    anonymous: boolean("anonymous").notNull().default(true),
+    consentAt: timestamp("consent_at", { withTimezone: true }),
+    firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull(),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull(),
+    visitCount: integer("visit_count").notNull().default(0),
+    pageviews: integer("pageviews").notNull().default(0),
+    engagedSeconds: integer("engaged_seconds").notNull().default(0),
+    /** How they first arrived. */
+    source: text("source"),
+    medium: text("medium"),
+    campaign: text("campaign"),
+    referrer: text("referrer"),
+    landingPage: text("landing_page"),
+    deviceType: text("device_type"),
+    os: text("os"),
+    browser: text("browser"),
+    screen: text("screen"),
+    language: text("language"),
+    timezone: text("timezone"),
+    country: text("country"),
+    region: text("region"),
+    city: text("city"),
+    /** Consent only. */
+    deviceModel: text("device_model"),
+    postalCode: text("postal_code"),
+    ip: text("ip"),
+    /** Set when a consenting visitor places an order. */
+    customerId: uuid("customer_id").references(() => customers.id, { onDelete: "set null" }),
+  },
+  (t) => [
+    uniqueIndex("visitors_anon_key_idx")
+      .on(t.anonKey)
+      .where(sql`${t.anonKey} is not null`),
+    index("visitors_last_seen_idx").on(t.lastSeenAt),
+    index("visitors_customer_idx").on(t.customerId),
+  ],
+);
+
+/** One visit: ends after 30 minutes without activity (the browser starts a new visit id). */
+export const visitorSessions = pgTable(
+  "visitor_sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    visitorId: uuid("visitor_id")
+      .notNull()
+      .references(() => visitors.id, { onDelete: "cascade" }),
+    /** The browser's random visit id. */
+    key: text("key").notNull(),
+    /** The visitor's first visit (only known to be false for visitors who accepted cookies). */
+    firstVisit: boolean("first_visit").notNull().default(true),
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull(),
+    pageviews: integer("pageviews").notNull().default(0),
+    engagedSeconds: integer("engaged_seconds").notNull().default(0),
+    landingPage: text("landing_page"),
+    exitPage: text("exit_page"),
+    /** The page open right now, for the live view. */
+    currentPage: text("current_page"),
+    referrer: text("referrer"),
+    source: text("source"),
+    medium: text("medium"),
+    campaign: text("campaign"),
+    deviceType: text("device_type"),
+    browser: text("browser"),
+    os: text("os"),
+    country: text("country"),
+    region: text("region"),
+    city: text("city"),
+    /** Consent only. */
+    ip: text("ip"),
+  },
+  (t) => [
+    uniqueIndex("visitor_sessions_visitor_key_idx").on(t.visitorId, t.key),
+    index("visitor_sessions_started_idx").on(t.startedAt),
+    index("visitor_sessions_last_seen_idx").on(t.lastSeenAt),
+  ],
+);
+
+/** Page views (with engaged seconds) and actions within a visit. */
+export const visitorEvents = pgTable(
+  "visitor_events",
+  {
+    /** For page views, the browser's view id, so time can be added to it later. */
+    id: uuid("id").primaryKey().defaultRandom(),
+    visitorId: uuid("visitor_id")
+      .notNull()
+      .references(() => visitors.id, { onDelete: "cascade" }),
+    sessionId: uuid("session_id")
+      .notNull()
+      .references(() => visitorSessions.id, { onDelete: "cascade" }),
+    /** view | add_to_cart | begin_checkout | pack_select | pin_check | video_play | whatsapp_click | payment_method | order_placed | consent */
+    type: text("type").notNull(),
+    path: text("path"),
+    seconds: integer("seconds").notNull().default(0),
+    data: jsonb("data").$type<Record<string, string | number | boolean | null>>(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("visitor_events_session_idx").on(t.sessionId, t.createdAt),
+    index("visitor_events_visitor_idx").on(t.visitorId, t.createdAt),
+    index("visitor_events_type_created_idx").on(t.type, t.createdAt),
+  ],
+);
+
 export type Order = typeof orders.$inferSelect;
 export type OrderItem = typeof orderItems.$inferSelect;
 export type OrderEvent = typeof orderEvents.$inferSelect;
@@ -458,3 +580,6 @@ export type Refund = typeof refunds.$inferSelect;
 export type AuditEntry = typeof auditLog.$inferSelect;
 export type CartLead = typeof cartLeads.$inferSelect;
 export type CartLeadStatus = (typeof cartLeadStatus.enumValues)[number];
+export type Visitor = typeof visitors.$inferSelect;
+export type VisitorSession = typeof visitorSessions.$inferSelect;
+export type VisitorEvent = typeof visitorEvents.$inferSelect;

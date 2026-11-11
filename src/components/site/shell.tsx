@@ -1,8 +1,12 @@
 import type { ReactNode } from "react";
 import { AttributionCapture } from "@/components/analytics/attribution";
+import { Clarity } from "@/components/analytics/clarity";
+import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 import { MetaPixel } from "@/components/analytics/meta-pixel";
+import { VisitTracker } from "@/components/analytics/visit-tracker";
 import { CartProvider } from "@/components/cart/cart-context";
 import { CartDrawer } from "@/components/cart/cart-drawer";
+import { CookieBanner } from "@/components/consent/cookie-banner";
 import { JsonLd } from "@/components/seo/json-ld";
 import { StorefrontProvider } from "@/components/storefront-context";
 import { getStorefront } from "@/lib/catalog/storefront";
@@ -33,7 +37,11 @@ export async function SiteShell({ children }: { children: ReactNode }) {
         <Footer />
         <WhatsAppFloat />
         <CartDrawer onlinePayments={onlinePayments} />
+        <CookieBanner />
         <AttributionCapture />
+        <VisitTracker />
+        <GoogleAnalytics />
+        <Clarity />
         <MetaPixel />
         <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
       </CartProvider>

@@ -94,8 +94,20 @@ function watch(page: Page): PageWatch {
   return w;
 }
 
-/** `ip` gives the context its own client IP (next start trusts x-real-ip locally), like a separate shopper. */
-async function newContext(browser: Browser, width: number, ip?: string): Promise<BrowserContext> {
+/** A real browser's user agent: the visitor tracker ignores headless browsers as bots. */
+const SHOPPER_UA =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0";
+
+/**
+ * `ip` gives the context its own client IP (next start trusts x-real-ip locally), like a separate shopper.
+ * The cookie banner is answered ("Decline") unless `fresh`, so it doesn't cover what other checks test.
+ */
+async function newContext(
+  browser: Browser,
+  width: number,
+  ip?: string,
+  opts: { fresh?: boolean; shopper?: boolean } = {},
+): Promise<BrowserContext> {
   const mobile = width < 768;
   const ctx = await browser.newContext({
     viewport: { width, height: mobile ? 800 : 900 },
@@ -103,9 +115,15 @@ async function newContext(browser: Browser, width: number, ip?: string): Promise
     isMobile: mobile,
     hasTouch: mobile,
     ...(ip ? { extraHTTPHeaders: { "x-real-ip": ip } } : {}),
+    ...(opts.shopper ? { userAgent: SHOPPER_UA } : {}),
   });
   // tsx compiles helpers like __name() into functions passed to page.evaluate; define it in the page.
   await ctx.addInitScript("window.__name = (fn) => fn;");
+  if (!opts.fresh) {
+    await ctx.addInitScript(
+      `try { if (!localStorage.getItem("hellotidy_consent_v1")) localStorage.setItem("hellotidy_consent_v1", JSON.stringify({ choice: "denied", at: "2026-01-01T00:00:00Z", v: 1 })); } catch {}`,
+    );
+  }
   return ctx;
 }
 
@@ -514,7 +532,8 @@ async function main() {
         problems.push(`video section shown on ${path} with no published clips`);
     }
     await m.goto(`${BASE}/products/magic-eraser-sponge`);
-    if (!genuine && (await m.locator("a[href='#reviews']").count())) problems.push("rating line or menu links to #reviews");
+    if (!genuine && (await m.locator("a[href='#reviews']").count()))
+      problems.push("rating line or menu links to #reviews");
     return problems;
   });
 
@@ -1047,6 +1066,106 @@ async function main() {
     return problems;
   });
 
+  // ───────────── K. Cookie banner, visitor tracking, product feeds ─────────────
+  let trackedOrder = "";
+  for (const width of [390, 1440]) {
+    await check(
+      `K1@${width}`,
+      "Cookie banner: asks once, Decline is respected, Cookie settings reopens it",
+      async () => {
+        const ctx = await newContext(browser, width, `198.51.100.${150 + width / 10}`, { fresh: true });
+        const p = await ctx.newPage();
+        const problems: string[] = [];
+        await p.goto(`${BASE}/`);
+        const banner = p.locator("section", { has: p.getByRole("heading", { name: "Cookies" }) });
+        const shown = await banner.waitFor({ timeout: 10_000 }).then(
+          () => true,
+          () => false,
+        );
+        if (!shown) {
+          await ctx.close();
+          return ["banner not shown on a first visit"];
+        }
+        const accept = banner.getByRole("button", { name: "Accept" });
+        const decline = banner.getByRole("button", { name: "Decline" });
+        const [a, d] = [await accept.boundingBox(), await decline.boundingBox()];
+        if (!a || !d || Math.abs(a.width - d.width) > 2 || Math.abs(a.height - d.height) > 2) {
+          problems.push("Accept and Decline are not the same size");
+        }
+        if (!(await banner.locator('a[href="/policies/privacy#cookies"]').count())) problems.push("no privacy link");
+        const overflow = await p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+        if (overflow > 1) problems.push(`page ${overflow}px wider with the banner`);
+        await shot(p, `cookie-banner-${width}`);
+        await decline.click();
+        if (await banner.isVisible()) problems.push("banner stayed after Decline");
+        const stored = await p.evaluate(() => localStorage.getItem("hellotidy_consent_v1") ?? "");
+        if (!stored.includes('"denied"')) problems.push(`choice not saved: ${stored}`);
+        await p.reload();
+        await p.waitForTimeout(800);
+        if (await banner.isVisible()) problems.push("banner asked again after a reload");
+        if ((await ctx.cookies()).some((c) => c.name === "hellotidy_vid"))
+          problems.push("visitor cookie set after Decline");
+        await p.getByRole("button", { name: "Cookie settings" }).click();
+        if (!(await banner.isVisible())) problems.push("Cookie settings didn't reopen the banner");
+        if (!(await banner.getByText("You declined cookies").count()))
+          problems.push("reopened banner doesn't say the choice");
+        await banner.getByRole("button", { name: "Close cookie settings" }).click();
+        if (await banner.isVisible()) problems.push("close button didn't close it");
+        await ctx.close();
+        return problems;
+      },
+    );
+  }
+
+  await check("K2", "Privacy policy explains cookies and analytics", async () => {
+    const res = await (await fetch(`${BASE}/policies/privacy`)).text();
+    const problems: string[] = [];
+    if (!res.includes('id="cookies"')) problems.push("no #cookies section");
+    for (const words of ["If you decline", "If you accept", "Microsoft Clarity", "hellotidy_vid", "12 months"]) {
+      if (!res.includes(words)) problems.push(`missing "${words}"`);
+    }
+    return problems;
+  });
+
+  await check("K3", "A shopper who accepts: cookie set, visit and order recorded (checked in J20)", async () => {
+    const ctx = await newContext(browser, 390, "198.51.100.177", { fresh: true, shopper: true });
+    const p = await ctx.newPage();
+    const problems: string[] = [];
+    await p.goto(`${BASE}/?utm_source=instagram&utm_medium=paid&utm_campaign=qa-launch`);
+    await p.getByRole("button", { name: "Accept" }).click();
+    await p.waitForTimeout(800);
+    if (!(await ctx.cookies()).some((c) => c.name === "hellotidy_vid")) problems.push("no visitor cookie after Accept");
+    await p.goto(`${BASE}/products/magic-eraser-sponge`);
+    await p.locator("#buy label", { hasText: "Mega Pack" }).click();
+    await p.waitForTimeout(300);
+    await p.locator("#buy").getByRole("button", { name: "Buy now" }).click();
+    await p.waitForURL(/\/checkout/);
+    await p.waitForTimeout(500);
+    const order = await placeCodOrder(p, { pack: "pack-50", phone: "9811122233", name: "Tracked Shopper" });
+    trackedOrder = order.orderNumber;
+    if (!trackedOrder) problems.push("order not placed");
+    await p.waitForTimeout(1500);
+    await ctx.close();
+    return problems;
+  });
+
+  await check("K4", "Product feeds for Google Merchant Center and Meta", async () => {
+    const problems: string[] = [];
+    for (const [path, want] of [
+      ["/feeds/google.xml", "<g:maximum_retail_price>"],
+      ["/feeds/meta.xml", "<g:sale_price>"],
+    ] as const) {
+      const res = await fetch(`${BASE}${path}`);
+      const body = await res.text();
+      if (res.status !== 200) problems.push(`${path}: status ${res.status}`);
+      if (!res.headers.get("content-type")?.includes("xml")) problems.push(`${path}: not XML`);
+      if (!body.includes(want)) problems.push(`${path}: no ${want}`);
+      if (!body.includes("/products/magic-eraser-sponge?pack=pack-25")) problems.push(`${path}: pack link missing`);
+      if ((body.match(/<item>/g) ?? []).length < 3) problems.push(`${path}: fewer than 3 packs`);
+    }
+    return problems;
+  });
+
   // ───────────── J. Admin (Shopify-style panel) + I4/I5 ─────────────
   if (ADMIN.email && ADMIN.password) {
     const actx = await newContext(browser, 1440, "198.51.100.10");
@@ -1092,6 +1211,7 @@ async function main() {
     let customerUrl = "";
     let manualOrderUrl = "";
     let cancelledOrderUrl = "";
+    let visitorUrl = "";
 
     await check("J1", "Home: to-do queue, sales, setup guide and recent orders", async () => {
       await go(a, `${BASE}/admin`);
@@ -1388,7 +1508,13 @@ async function main() {
       const savedToast = a.getByRole("region", { name: "Notifications" }).getByText("Saved.");
       if (!(await until(savedToast))) problems.push("block not saved (no toast)");
       // A toast pauses while hovered, so move the pointer off it (it may have opened under the cursor).
-      else if ((await a.mouse.move(5, 5), !(await savedToast.waitFor({ state: "detached", timeout: 9_000 }).then(() => true, () => false))))
+      else if (
+        (await a.mouse.move(5, 5),
+        !(await savedToast.waitFor({ state: "detached", timeout: 9_000 }).then(
+          () => true,
+          () => false,
+        )))
+      )
         problems.push("toast didn't close by itself");
       const { ctx, page } = await shopper();
       await page.goto(`${BASE}/checkout?pack=pack-25&qty=1`);
@@ -1537,6 +1663,48 @@ async function main() {
       return want.filter((w) => !text.includes(w)).map((w) => `missing "${w}"`);
     });
 
+    await check("J20", "Visitors: overview, funnel, sources, list, timeline and the order's source", async () => {
+      const problems: string[] = [];
+      await go(a, `${BASE}/admin/visitors`);
+      const text = await mainText(a);
+      for (const want of ["Sales funnel", "Placed an order", "instagram / paid", "qa-launch", "on the store now"]) {
+        if (!text.includes(want)) problems.push(`overview missing "${want}"`);
+      }
+      if (text.includes("No visits in this period yet")) problems.push("visits chart empty");
+      await shot(a, "admin-visitors-1440", true);
+      await go(a, `${BASE}/admin/visitors/all?filter=bought`);
+      const row = a.locator(`main li a[href^="/admin/visitors/"]:not([href^="/admin/visitors/all"])`).first();
+      if (!(await row.count())) {
+        problems.push("no visitor under Bought");
+      } else {
+        await row.click();
+        await a.waitForURL(/\/admin\/visitors\/[0-9a-f-]{36}/);
+        await a.locator("h1").first().waitFor();
+        const detail = await mainText(a);
+        for (const want of ["Accepted cookies", "Placed an order", "Viewed Product page", "Picked a pack"]) {
+          if (!detail.includes(want)) problems.push(`visitor timeline missing "${want}"`);
+        }
+        visitorUrl = a.url();
+        await shot(a, "admin-visitor-detail-1440", true);
+      }
+      if (trackedOrder) {
+        await go(a, `${BASE}/admin/orders?q=${trackedOrder}`);
+        await a.getByRole("link", { name: trackedOrder }).first().click();
+        await a.waitForURL(/\/admin\/orders\/[0-9a-f-]{36}/);
+        const card = a.locator("section", { has: a.getByRole("heading", { name: "How they found us" }) });
+        await card.waitFor({ timeout: 10_000 }).catch(() => undefined);
+        const cardText = (await card.textContent()) ?? "";
+        if (!cardText.includes("instagram / paid (qa-launch)"))
+          problems.push(`order card: "${cardText.slice(0, 160)}"`);
+        if (!(await a.getByText("Accepted", { exact: true }).count()))
+          problems.push("order details don't show the cookie choice");
+        await shot(a, "admin-order-found-us-1440", true);
+      } else {
+        problems.push("no tracked order from K3");
+      }
+      return problems;
+    });
+
     for (const e of aw.errors) notes.push(`admin flow: ${e}`);
 
     // Every admin page at phone and desktop width: layout, console, overlap, accessibility.
@@ -1557,6 +1725,9 @@ async function main() {
       discountUrl.replace(BASE, ""),
       "/admin/discounts/new",
       "/admin/analytics",
+      "/admin/visitors",
+      "/admin/visitors/all",
+      visitorUrl.replace(BASE, ""),
       "/admin/messages",
       "/admin/settings",
       "/admin/settings/staff",

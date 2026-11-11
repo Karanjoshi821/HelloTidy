@@ -6,6 +6,7 @@ import { BadgeCheck, Play, ShieldCheck, TriangleAlert } from "lucide-react";
 import { displayedVideoReviews, type VideoReview } from "@/config/video-reviews";
 import { cn } from "@/lib/utils";
 import { Section } from "./ui/layout";
+import { trackVideoPlay } from "@/lib/analytics/track";
 
 function formatDuration(seconds: number): string {
   const s = Math.round(seconds);
@@ -116,16 +117,17 @@ export function VideoReviewsSection({ title }: { title: string }) {
           Short clips from customers, cleaning their own walls and shoes. Tap one to watch it with sound.
         </p>
       </div>
-      {hasPlaceholders && (
-      <></>
-      )}
-      <ul className="-mx-4 flex snap-x snap-mandatory scroll-pl-4 gap-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4">
+      {hasPlaceholders && <></>}
+      <ul className="-mx-4 flex snap-x snap-mandatory scroll-pl-4 [scrollbar-width:none] gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4">
         {displayedVideoReviews.map((review) => (
           <VideoCard
             key={review.id}
             review={review}
             active={activeId === review.id}
-            onPlay={() => setActiveId(review.id)}
+            onPlay={() => {
+              setActiveId(review.id);
+              trackVideoPlay(review.id);
+            }}
             onEnded={() => setActiveId(null)}
           />
         ))}

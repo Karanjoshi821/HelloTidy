@@ -74,7 +74,7 @@ export const siteConfig = {
   },
 
   /** Date the policy pages were last reviewed. Update when you change them. */
-  policiesUpdated: "2026-10-30",
+  policiesUpdated: "2026-11-11",
 } as const;
 
 export type SiteConfig = typeof siteConfig;
