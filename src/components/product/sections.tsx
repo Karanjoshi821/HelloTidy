@@ -15,6 +15,7 @@ import {
 import { product } from "@/config/products";
 import { siteConfig } from "@/config/site";
 import type { Faq } from "@/config/faq";
+import { ForestDecor, forestBand } from "@/components/ui/forest-band";
 import { getStorefront } from "@/lib/catalog/storefront";
 import { lowestPerPiece } from "@/lib/catalog/types";
 import { formatPaise } from "@/lib/money";
@@ -269,21 +270,24 @@ export async function FinalCta() {
   if (!available.length) return null;
   const from = Math.min(...available.map((p) => p.price));
   return (
-    <div className="rounded-[2rem] bg-ink px-6 py-10 text-center text-white sm:px-12 sm:py-14">
-      <p className="text-sm font-semibold tracking-wide text-mint uppercase">{product.tagline}</p>
-      <h2 className="mt-2 text-3xl leading-tight font-extrabold tracking-tight text-balance sm:text-4xl">
-        Those marks have had their day.
-      </h2>
-      <p className="mx-auto mt-3 max-w-xl text-white/75">
-        Packs from {formatPaise(from)} with free delivery and Cash on Delivery. Free replacement if anything arrives
-        damaged.
-      </p>
-      <a
-        href="#choose-pack"
-        className="mt-6 inline-flex h-13 items-center justify-center rounded-full bg-mint px-8 text-base font-extrabold text-ink transition-transform hover:scale-[1.02]"
-      >
-        Choose your pack
-      </a>
+    <div className={cn(forestBand, "rounded-[2rem] px-6 py-10 text-center sm:px-12 sm:py-14")}>
+      <ForestDecor />
+      <div className="relative">
+        <p className="text-sm font-semibold tracking-wide text-mint uppercase">{product.tagline}</p>
+        <h2 className="mt-2 text-3xl leading-tight font-extrabold tracking-tight text-balance sm:text-4xl">
+          Those marks have had their day.
+        </h2>
+        <p className="mx-auto mt-3 max-w-xl text-white/75">
+          Packs from {formatPaise(from)} with free delivery and Cash on Delivery. Free replacement if anything arrives
+          damaged.
+        </p>
+        <a
+          href="#choose-pack"
+          className="mt-6 inline-flex h-13 items-center justify-center rounded-full bg-mint px-8 text-base font-extrabold text-ink transition-transform hover:scale-[1.02]"
+        >
+          Choose your pack
+        </a>
+      </div>
     </div>
   );
 }

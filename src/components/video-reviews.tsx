@@ -25,6 +25,7 @@ import {
 import { displayedVideoReviews, type VideoReview } from "@/config/video-reviews";
 import { genuineReviews } from "@/config/reviews";
 import { siteConfig } from "@/config/site";
+import { ForestDecor, forestBand } from "@/components/ui/forest-band";
 import { cn } from "@/lib/utils";
 import { trackVideoPlay } from "@/lib/analytics/track";
 
@@ -386,27 +387,6 @@ function Player({ review, onClose }: { review: VideoReview; onClose: () => void 
 
 // ───────────── Section ─────────────
 
-function Decor() {
-  return (
-    <>
-      <svg
-        className="pointer-events-none absolute -top-6 right-0 w-[48%] max-w-[700px] text-white/[0.045]"
-        viewBox="0 0 600 300"
-        aria-hidden="true"
-      >
-        <path d="M600 0H170c70 40 110 150 270 175 70 11 120 55 160 125V0Z" fill="currentColor" />
-      </svg>
-      <svg
-        className="pointer-events-none absolute bottom-0 left-0 w-[42%] max-w-[620px] text-white/[0.05]"
-        viewBox="0 0 600 260"
-        aria-hidden="true"
-      >
-        <path d="M0 260V70c90-55 200-45 265 25 60 65 150 115 250 165H0Z" fill="currentColor" />
-      </svg>
-    </>
-  );
-}
-
 function Swoosh({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 140 12" fill="none" aria-hidden="true">
@@ -435,9 +415,9 @@ export function VideoReviewsSection({ shopHref, reviewsHref }: { shopHref: strin
     <section
       id="video-reviews"
       aria-labelledby="video-reviews-title"
-      className="relative isolate scroll-mt-16 overflow-hidden bg-forest bg-[radial-gradient(ellipse_at_50%_0%,#145a3a_0%,transparent_60%)] py-14 text-white sm:py-20"
+      className={cn(forestBand, "scroll-mt-16 py-14 sm:py-20")}
     >
-      <Decor />
+      <ForestDecor />
       <div className="relative mx-auto w-full max-w-[1200px] px-4 sm:px-6">
         <div className="mx-auto max-w-3xl text-center">
           <p className="inline-flex items-center gap-2 rounded-full border border-lime/35 bg-white/[0.06] px-4 py-1.5 text-sm font-semibold">

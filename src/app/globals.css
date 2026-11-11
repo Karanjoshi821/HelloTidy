@@ -76,6 +76,12 @@ body {
   outline-offset: 2px;
 }
 
+/* Dark green bands (video reviews, packs, closing banners, footer): see components/ui/forest-band.tsx. */
+@utility forest-glow {
+  background-color: var(--color-forest);
+  background-image: radial-gradient(ellipse at 50% 0%, #145a3a 0%, transparent 60%);
+}
+
 /* <details> accordions */
 details > summary {
   list-style: none;

@@ -1,6 +1,6 @@
 # QA report
 
-Run 2026-11-11 12:15 UTC against `http://localhost:3423` (production build, real Chrome). Checklist: [QA-CHECKLIST.md](QA-CHECKLIST.md).
+Run 2026-11-11 15:30 UTC against `http://localhost:3423` (production build, real Chrome). Checklist: [QA-CHECKLIST.md](QA-CHECKLIST.md).
 
 **83 / 83 checks passed.**
 

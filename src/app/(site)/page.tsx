@@ -30,6 +30,8 @@ import { displayedReviews } from "@/config/reviews";
 import { VideoReviewsSection } from "@/components/video-reviews";
 import { JsonLd } from "@/components/seo/json-ld";
 import { LinkButton } from "@/components/ui/button";
+import { ForestDecor, forestBand } from "@/components/ui/forest-band";
+import { cn } from "@/lib/utils";
 import { Container, Section, SectionHeading } from "@/components/ui/layout";
 import { getStorefront } from "@/lib/catalog/storefront";
 import { isRazorpayEnabled } from "@/lib/payments/razorpay";
@@ -177,9 +179,10 @@ export default async function HomePage() {
       </Section>
 
       {/* Packs */}
-      <Section id="packs" className="bg-ink text-white">
+      <Section id="packs" className={forestBand}>
+        <ForestDecor />
         <PackSelectionProvider>
-          <div className="grid items-center gap-10 lg:grid-cols-[1fr_1.2fr]">
+          <div className="relative grid items-center gap-10 lg:grid-cols-[1fr_1.2fr]">
             <div>
               <p className="mb-2 text-sm font-semibold tracking-wide text-mint uppercase">Choose your pack</p>
               <h2 className="text-3xl leading-tight font-extrabold tracking-tight sm:text-4xl">
@@ -242,16 +245,19 @@ export default async function HomePage() {
       </Section>
 
       <Section className="pt-0 sm:pt-0">
-        <div className="relative overflow-hidden rounded-[2rem] bg-brand px-6 py-12 text-center text-white sm:px-12">
-          <h2 className="text-3xl font-extrabold tracking-tight text-balance sm:text-4xl">
-            Make the stubborn stains disappear
-          </h2>
-          <p className="mx-auto mt-3 max-w-xl text-lg text-white">
-            Free delivery across India. Cash on Delivery available.
-          </p>
-          <LinkButton href={productHref} size="lg" variant="secondary" className="mt-8">
-            Shop now <ArrowRight className="size-5" />
-          </LinkButton>
+        <div className={cn(forestBand, "rounded-[2rem] px-6 py-12 text-center sm:px-12")}>
+          <ForestDecor />
+          <div className="relative">
+            <h2 className="text-3xl font-extrabold tracking-tight text-balance sm:text-4xl">
+              Make the stubborn stains disappear
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-lg text-white/80">
+              Free delivery across India. Cash on Delivery available.
+            </p>
+            <LinkButton href={productHref} size="lg" variant="onDark" className="mt-8">
+              Shop now <ArrowRight className="size-5" />
+            </LinkButton>
+          </div>
         </div>
       </Section>
 

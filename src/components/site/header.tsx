@@ -43,7 +43,7 @@ export function AnnouncementBar({ onlinePayments }: { onlinePayments: boolean })
   const highlights = highlightsFor(onlinePayments);
   const half = [...highlights, ...highlights];
   return (
-    <div className="marquee-bar relative overflow-hidden bg-ink text-[13px] font-medium text-white">
+    <div className="marquee-bar relative overflow-hidden forest-glow text-[13px] font-medium text-white">
       <ul className="sr-only">
         {highlights.map((h) => (
           <li key={h.text}>{h.text}</li>

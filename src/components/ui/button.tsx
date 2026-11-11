@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-type Variant = "primary" | "secondary" | "outline" | "ghost" | "whatsapp";
+type Variant = "primary" | "secondary" | "outline" | "ghost" | "onDark" | "whatsapp";
 type Size = "sm" | "md" | "lg";
 
 const base =
@@ -13,6 +13,8 @@ const variants: Record<Variant, string> = {
   secondary: "bg-ink text-white hover:bg-ink-soft",
   outline: "border border-line bg-white text-ink hover:border-ink/30 hover:bg-surface",
   ghost: "text-ink hover:bg-surface",
+  // On a dark green band (forest-band.tsx), where the ink button would disappear.
+  onDark: "bg-mint text-ink hover:bg-white",
   // Darker than WhatsApp's own green so white text passes WCAG AA (5.1:1).
   whatsapp: "bg-[#0d7f47] text-white hover:bg-[#0a6b3c]",
 };

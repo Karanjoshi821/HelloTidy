@@ -4,6 +4,8 @@ import { cacheLife } from "next/cache";
 import { CookieSettingsButton } from "@/components/consent/cookie-settings-button";
 import { product } from "@/config/products";
 import { isPlaceholder, siteConfig } from "@/config/site";
+import { ForestDecor, forestBand } from "@/components/ui/forest-band";
+import { cn } from "@/lib/utils";
 import { Logo } from "./header";
 
 const shopLinks = [
@@ -63,8 +65,9 @@ function LinkColumn({
 export function Footer() {
   const { contact } = siteConfig;
   return (
-    <footer className="bg-ink pb-24 text-white md:pb-0">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+    <footer className={cn(forestBand, "pb-24 md:pb-0")}>
+      <ForestDecor />
+      <div className="relative mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <div>
           <Logo onDark />
           <p className="mt-3 font-bold text-white">{siteConfig.tagline}</p>
@@ -91,7 +94,7 @@ export function Footer() {
         <LinkColumn title="Help" links={helpLinks} />
         <LinkColumn title="Legal" links={legalLinks} extra={<CookieSettingsButton className={linkClass} />} />
       </div>
-      <div className="border-t border-white/15">
+      <div className="relative border-t border-white/15">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-6 text-xs text-white/75 sm:px-6 md:flex-row md:items-center md:justify-between">
           <p>
             © <CurrentYear /> {isPlaceholder(siteConfig.legalName) ? siteConfig.name : siteConfig.legalName}. All rights
