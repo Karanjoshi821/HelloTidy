@@ -164,7 +164,7 @@ export default async function HomePage() {
         </div>
       </Section>
 
-      <VideoReviewsSection title="Watch it work in real homes" />
+      <VideoReviewsSection shopHref={productHref} reviewsHref={`${productHref}#reviews`} />
 
       <Section className="bg-surface">
         <SectionHeading eyebrow="What it cleans" title="One sponge, a hundred stubborn marks" />

@@ -600,6 +600,45 @@ async function main() {
     return /aggregateRating|"@type":"Review"/.test(html) ? ["structured data contains review ratings"] : [];
   });
 
+  await check("C12", "Video reviews: tapping a card plays the clip with controls; Escape closes", async () => {
+    const problems: string[] = [];
+    if (!publishedVideoReviews.length) return [];
+    for (const path of ["/", "/products/magic-eraser-sponge"]) {
+      await m.goto(`${BASE}${path}`);
+      const section = m.locator("#video-reviews");
+      if (!(await section.count())) {
+        problems.push(`no video section on ${path}`);
+        continue;
+      }
+      const cards = section.getByRole("button", { name: /^Play video/ });
+      if ((await cards.count()) !== publishedVideoReviews.length) problems.push(`wrong number of cards on ${path}`);
+      if (path === "/") continue;
+      // The whole card plays the clip: click the before/after picture, away from the play icon and the quote.
+      const card = section.locator("ul[aria-label='Customer videos'] > li").first();
+      await card.scrollIntoViewIfNeeded();
+      const box = (await card.boundingBox())!;
+      await card.click({ position: { x: 40, y: box.width * 0.75 } });
+      const dialog = m.getByRole("dialog", { name: /^Customer video/ });
+      if ((await dialog.waitFor({ timeout: 5000 }).catch(() => "timeout")) === "timeout") {
+        problems.push("card click didn't open the player");
+        continue;
+      }
+      await m.waitForTimeout(1500);
+      const v = await dialog.locator("video").evaluate((el: HTMLVideoElement) => ({
+        controls: el.controls,
+        playing: !el.paused && el.currentTime > 0,
+      }));
+      if (!v.controls) problems.push("player has no controls");
+      if (!v.playing) problems.push("clip didn't start playing");
+      await m.keyboard.press("Escape");
+      await m.waitForTimeout(300);
+      if (await dialog.count()) problems.push("Escape didn't close the player");
+      const focused = await m.evaluate(() => document.activeElement?.textContent ?? "");
+      if (!focused.startsWith("Play video")) problems.push("focus didn't return to the card");
+    }
+    return problems;
+  });
+
   // ───────────── D. Cart ─────────────
   await check("D1", "Cart quantity, limit, remove and empty state", async () => {
     await m.goto(`${BASE}/products/magic-eraser-sponge`);

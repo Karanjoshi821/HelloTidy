@@ -17,6 +17,11 @@
   --color-mint: #bff0cf;
   --color-mint-soft: #e8f8ee;
 
+  /* Video reviews band: deep green with a lime accent. */
+  --color-forest: #0b3a26;
+  --color-forest-soft: #14523a;
+  --color-lime: #cdf26b;
+
   /* Admin status badges only: the storefront is green and white. */
   --color-sun: #ffd23f;
   --color-sun-soft: #fff6d6;

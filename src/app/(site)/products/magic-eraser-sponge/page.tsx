@@ -223,7 +223,7 @@ export default async function ProductPage() {
         </div>
       </Section>
 
-      <VideoReviewsSection title="See it work in real homes" />
+      <VideoReviewsSection shopHref="#buy" reviewsHref={displayedReviews.length ? "#reviews" : undefined} />
 
       <Section className="bg-surface">
         <SectionHeading eyebrow="What it cleans" title="Made for everyday marks" />
