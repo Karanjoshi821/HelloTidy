@@ -66,13 +66,13 @@ function offerFor(pack: Pack) {
         transitTime: { "@type": "QuantitativeValue", minValue: 3, maxValue: 7, unitCode: "DAY" },
       },
     },
+    // No change-of-mind returns (policies/refund); damaged or wrong items are replaced or refunded,
+    // which isn't a return. Must match Merchant Center's return setting.
     hasMerchantReturnPolicy: {
       "@type": "MerchantReturnPolicy",
       applicableCountry: "IN",
-      returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
-      merchantReturnDays: siteConfig.shipping.claimWindowDays,
-      returnFees: "https://schema.org/FreeReturn",
-      returnMethod: "https://schema.org/ReturnByMail",
+      returnPolicyCategory: "https://schema.org/MerchantReturnNotPermitted",
+      merchantReturnLink: absoluteUrl("/policies/refund"),
     },
   };
 }
