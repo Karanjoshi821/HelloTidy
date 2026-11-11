@@ -5,6 +5,7 @@ import { sendOrderConfirmationEmail, sendOwnerAlertEmail, sendOwnerOrderEmail } 
 import { alertTelegramMessage, newMessageTelegramMessage, newOrderTelegramMessage, sendTelegram } from "./telegram";
 import type { OrderWithItems } from "./types";
 import { sendOrderWebhook } from "./webhook";
+import { syncOrderToShiprocket } from "../shipping/order-sync";
 
 /**
  * Fan-out when an order becomes confirmed (COD placed or prepaid paid).
@@ -18,8 +19,9 @@ export async function notifyOrderConfirmed(order: OrderWithItems): Promise<void>
     sendOrderConfirmationEmail(order),
     sendOwnerOrderEmail(order),
     sendPurchaseEvent(order),
+    syncOrderToShiprocket(order.id),
   ]);
-  const channels = ["telegram", "webhook", "customer-email", "owner-email", "meta-capi"];
+  const channels = ["telegram", "webhook", "customer-email", "owner-email", "meta-capi", "shiprocket"];
   results.forEach((result, i) => {
     if (result.status === "rejected") {
       console.error(`[notify] ${channels[i]} failed for ${order.orderNumber}:`, result.reason);
@@ -43,6 +45,8 @@ export async function notifyPaid(result: PaidResult): Promise<void> {
   if (outcome === "confirmed") return notifyOrderConfirmed(order);
   if (outcome === "reverted_from_cod") {
     // The COD switch already announced this order; only the payment mode changed.
+    // Shiprocket still has it as COD, so update it there too.
+    await syncOrderToShiprocket(order.id).catch((error) => console.error("[notify] shiprocket update failed:", error));
     return notifyOwnerAlert(
       `Order ${order.orderNumber} was switched to Cash on Delivery, but the customer's online payment went through. It is now PREPAID, so make sure the courier does not collect cash.`,
       order.id,

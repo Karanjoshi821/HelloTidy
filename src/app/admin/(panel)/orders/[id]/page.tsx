@@ -10,6 +10,7 @@ import {
   setOrderTagsAction,
   updateContactAction,
   updateNotesAction,
+  sendToShiprocketAction,
   updateShippingAction,
   updateStatusAction,
   verifyCodAction,
@@ -24,6 +25,7 @@ import { absoluteUrl } from "@/config/site";
 import { requireAdmin } from "@/lib/auth/dal";
 import { readCheckoutSettings } from "@/lib/catalog/service";
 import { getDb } from "@/lib/db";
+import { shiprocketConfig } from "@/lib/env";
 import { INDIAN_STATES } from "@/lib/india";
 import { formatPaise } from "@/lib/money";
 import { CANCEL_REASONS, getOrderDetail, STATUS_LABELS, STATUS_TRANSITIONS } from "@/lib/orders/admin";
@@ -59,6 +61,7 @@ export default async function OrderDetailPage({ params, searchParams }: PageProp
   const canCancel = next.includes("cancelled");
   const canRto = next.includes("rto");
   const open = order.status === "confirmed" || order.status === "processing";
+  const shiprocketReady = Boolean(shiprocketConfig()?.pickupLocation);
   const editable = order.status === "pending_payment" || open;
   const codOpen = order.paymentMethod === "cod" && open;
   const remaining = order.total - order.refundedAmount;
@@ -214,6 +217,40 @@ export default async function OrderDetailPage({ params, searchParams }: PageProp
                 )}
               </div>
             </ActionForm>
+
+            {shiprocketReady && order.status !== "pending_payment" && (
+              <div className="mt-5 border-t border-line pt-4 text-sm">
+                <p className="font-semibold">Shiprocket</p>
+                <p className="mt-0.5 text-muted">
+                  {order.shiprocketOrderId
+                    ? `Order #${order.shiprocketOrderId}${order.shiprocketSyncedAt ? `, last sent ${formatDateTime(order.shiprocketSyncedAt)}` : ""}`
+                    : "Not sent yet."}
+                </p>
+                {order.shiprocketError && (
+                  <p className="mt-1 text-danger">Last attempt failed: {order.shiprocketError}</p>
+                )}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {order.status !== "cancelled" && (
+                    <ActionForm action={sendToShiprocketAction}>
+                      <input type="hidden" name="orderId" value={order.id} />
+                      <button type="submit" className={buttonClasses("secondary", "sm")}>
+                        {order.shiprocketOrderId ? "Update in Shiprocket" : "Send to Shiprocket"}
+                      </button>
+                    </ActionForm>
+                  )}
+                  {order.shiprocketOrderId && (
+                    <a
+                      href={`/admin/orders/${order.id}/shiprocket-invoice`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={buttonClasses("outline", "sm")}
+                    >
+                      Shiprocket invoice
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
           </Card>
 
           <Card title="Timeline" className="order-6">

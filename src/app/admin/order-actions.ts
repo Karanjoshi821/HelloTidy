@@ -42,6 +42,7 @@ import {
 import { createManualOrder } from "@/lib/orders/manual";
 import { getOrderById, OrderError, PriceChangedError, recordOrderEvent } from "@/lib/orders/service";
 import { switchToCodSafely } from "@/lib/payments/flow";
+import { cancelOrderOnShiprocket, syncOrderToShiprocket } from "@/lib/shipping/order-sync";
 import { RazorpayError } from "@/lib/payments/razorpay";
 import { normalizeTag } from "@/lib/tags";
 
@@ -76,6 +77,7 @@ export async function updateStatusAction(_prev: ActionResult, formData: FormData
     });
     applyStockEffect(effect);
     if (next === "shipped") after(() => notifyShipped(orderId));
+    if (next === "cancelled") after(() => cancelOrderOnShiprocket(orderId, user.email));
   } catch (error) {
     return failure(error, "Couldn't update the status.");
   }
@@ -240,13 +242,27 @@ export async function updateContactAction(_prev: ActionResult, formData: FormDat
   const parsed = contactSchema.safeParse(formObject(formData));
   if (!parsed.success) return { ok: false, message: firstIssue(parsed.error) };
   const { orderId, ...input } = parsed.data;
+  let inShiprocket = false;
   try {
     await updateOrderContact(orderId, input, user.email);
+    inShiprocket = Boolean((await getOrderById(orderId))?.shiprocketOrderId);
   } catch (error) {
     return failure(error, "Couldn't save the details.");
   }
+  // Keep Shiprocket's copy of the address in step.
+  if (inShiprocket) after(() => syncOrderToShiprocket(orderId, { actor: user.email, manual: true }));
   refresh();
-  return { ok: true, message: "Customer details saved." };
+  return { ok: true, message: inShiprocket ? "Customer details saved, and updated in Shiprocket." : "Customer details saved." };
+}
+
+/** Sends (or re-sends) one order to Shiprocket from the order page. */
+export async function sendToShiprocketAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  const user = await requireAdmin();
+  const parsed = uuidField.safeParse(formData.get("orderId"));
+  if (!parsed.success) return { ok: false, message: "Invalid request." };
+  const result = await syncOrderToShiprocket(parsed.data, { actor: user.email, manual: true });
+  refresh();
+  return result;
 }
 
 export async function recordRefundAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {

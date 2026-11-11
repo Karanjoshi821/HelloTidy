@@ -26,7 +26,8 @@ import {
 import { AvoidList, FaqList, HowItWorks, TrustStrip, UseCases } from "@/components/product/sections";
 import { BeforeAfter } from "@/components/before-after";
 import { ReviewsSection } from "@/components/reviews";
-import { genuineReviews } from "@/config/reviews";
+import { displayedReviews } from "@/config/reviews";
+import { VideoReviewsSection } from "@/components/video-reviews";
 import { JsonLd } from "@/components/seo/json-ld";
 import { LinkButton } from "@/components/ui/button";
 import { Container, Section, SectionHeading } from "@/components/ui/layout";
@@ -163,6 +164,8 @@ export default async function HomePage() {
         </div>
       </Section>
 
+      <VideoReviewsSection title="Watch it work in real homes" />
+
       <Section className="bg-surface">
         <SectionHeading eyebrow="What it cleans" title="One sponge, a hundred stubborn marks" />
         <UseCases />
@@ -213,7 +216,7 @@ export default async function HomePage() {
         <AvoidList />
       </Section>
 
-      {genuineReviews.length > 0 && (
+      {displayedReviews.length > 0 && (
         <Section id="reviews" className="bg-surface">
           <SectionHeading eyebrow="Reviews" title="What customers say" />
           <ReviewsSection limit={3} moreHref={`${productHref}#reviews`} />

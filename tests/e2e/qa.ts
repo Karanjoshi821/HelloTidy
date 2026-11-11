@@ -13,6 +13,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { chromium, type Browser, type BrowserContext, type Locator, type Page } from "playwright-core";
 import { reviews } from "../../src/config/reviews";
+import { publishedVideoReviews } from "../../src/config/video-reviews";
 
 const BASE = process.env.BASE_URL ?? "http://localhost:3100";
 const SHOTS = process.env.SCREENSHOT_DIR;
@@ -505,10 +506,12 @@ async function main() {
     const problems: string[] = [];
     for (const path of ["/products/magic-eraser-sponge", "/"]) {
       await m.goto(`${BASE}${path}`);
-      if (await m.getByText("These look real but are fake.").count()) problems.push(`sample notice on ${path}`);
       if (await m.getByText(/sample reviews?/i).count()) problems.push(`"sample review" text on ${path}`);
       const section = await m.locator("#reviews").count();
       if (!genuine && section) problems.push(`reviews section shown on ${path} with no genuine reviews`);
+      if (await m.getByText("Placeholder", { exact: true }).count()) problems.push(`placeholder video on ${path}`);
+      if (!publishedVideoReviews.length && (await m.locator("#video-reviews").count()))
+        problems.push(`video section shown on ${path} with no published clips`);
     }
     await m.goto(`${BASE}/products/magic-eraser-sponge`);
     if (!genuine && (await m.locator("a[href='#reviews']").count())) problems.push("rating line or menu links to #reviews");

@@ -2,6 +2,7 @@ import "server-only";
 import { product } from "@/config/products";
 import { reviews } from "@/config/reviews";
 import { isPlaceholder, siteConfig } from "@/config/site";
+import { publishedVideoReviews, videoReviews } from "@/config/video-reviews";
 import { emailConfig, metaCapiConfig, razorpayConfig, telegramConfig } from "./env";
 
 /**
@@ -41,6 +42,13 @@ export function getLaunchChecklist(opts: { stockTracked: boolean }): ChecklistIt
       done: !reviews.some((r) => r.sample),
       required: true,
       help: "Replace the sample reviews in src/config/reviews.ts with genuine ones before running ads.",
+    },
+    {
+      id: "video-reviews",
+      label: "Customer video reviews",
+      done: publishedVideoReviews.length > 0 && !videoReviews.some((v) => v.placeholder),
+      required: false,
+      help: "Add customers' clips to src/config/video-reviews.ts and set consent: true once each customer agrees. Placeholders and clips without consent never show on the live site.",
     },
     {
       id: "domain",

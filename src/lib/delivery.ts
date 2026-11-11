@@ -25,6 +25,14 @@ export function deliveryWindow(dateKey: string, range: { min: number; max: numbe
   return { from: addWorkingDays(start, range.min), to: addWorkingDays(start, range.max) };
 }
 
+/**
+ * Working days to delivery once the courier's own estimate (pickup to door)
+ * is known: our dispatch takes 1–2 working days, plus a day's margin.
+ */
+export function courierDeliveryRange(courierDays: number): { min: number; max: number } {
+  return { min: courierDays + 1, max: courierDays + 3 };
+}
+
 const short = new Intl.DateTimeFormat("en-IN", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
 
 /** "Tue, 4 Nov" */

@@ -1,3 +1,5 @@
+import { showPlaceholders } from "./previews";
+
 /**
  * Customer reviews.
  *
@@ -146,8 +148,11 @@ export function reviewStats(list: Review[] = reviews) {
   return { count, average, distribution, hasSamples: list.some((r) => r.sample) };
 }
 
-/**
- * The only reviews the site shows or sends to Google. Sample reviews stay in
- * the list above for reference but are never published.
- */
+/** The only reviews sent to Google, and the only ones the live site shows. */
 export const genuineReviews = reviews.filter((r) => !r.sample);
+
+/**
+ * Reviews the site shows: genuine ones, plus the samples in a local preview
+ * (NEXT_PUBLIC_PREVIEW_SAMPLES=1). The live site never shows samples.
+ */
+export const displayedReviews = showPlaceholders ? reviews : genuineReviews;

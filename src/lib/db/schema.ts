@@ -86,6 +86,12 @@ export const orders = pgTable(
     courierName: text("courier_name"),
     awbCode: text("awb_code"),
     trackingUrl: text("tracking_url"),
+    /** Set once the order exists in Shiprocket (pushed when it's confirmed). */
+    shiprocketOrderId: text("shiprocket_order_id"),
+    shiprocketShipmentId: text("shiprocket_shipment_id"),
+    shiprocketSyncedAt: timestamp("shiprocket_synced_at", { withTimezone: true }),
+    /** The last push's error, cleared by the next successful push. */
+    shiprocketError: text("shiprocket_error"),
     adminNotes: text("admin_notes"),
 
     /** Used for fraud review and Meta Conversions API matching. */

@@ -3,10 +3,12 @@ import Link from "next/link";
 import { Check, HandCoins, RefreshCcw, Truck } from "lucide-react";
 import { orderFaqs, productFaqs } from "@/config/faq";
 import { product } from "@/config/products";
-import { genuineReviews } from "@/config/reviews";
+import { displayedReviews, genuineReviews } from "@/config/reviews";
+import { displayedVideoReviews } from "@/config/video-reviews";
+import { VideoReviewsSection } from "@/components/video-reviews";
 import { siteConfig } from "@/config/site";
 import { BeforeAfter } from "@/components/before-after";
-import { DeliveryEstimate } from "@/components/product/delivery-estimate";
+import { DeliveryCheck } from "@/components/product/delivery-check";
 import { BuyingGuide, OrderSteps } from "@/components/product/buying-guide";
 import { ProductGallery } from "@/components/product/gallery";
 import {
@@ -129,9 +131,7 @@ export default async function ProductPage() {
               <ul className="mt-6 space-y-3 rounded-2xl border border-line p-4 text-sm">
                 <li className="flex items-start gap-3">
                   <Truck className="mt-0.5 size-5 shrink-0 text-brand" />
-                  <span>
-                    <DeliveryEstimate />
-                  </span>
+                  <DeliveryCheck />
                 </li>
                 <li className="flex items-start gap-3">
                   <HandCoins className="mt-0.5 size-5 shrink-0 text-brand" />
@@ -180,8 +180,9 @@ export default async function ProductPage() {
           {[
             ["#choose-pack", "Compare packs"],
             ["#results", "See results"],
+            ...(displayedVideoReviews.length ? [["#video-reviews", "Videos"]] : []),
             ["#how-it-works", "How to use"],
-            ...(genuineReviews.length ? [["#reviews", "Reviews"]] : []),
+            ...(displayedReviews.length ? [["#reviews", "Reviews"]] : []),
             ["#product-faq", "Questions"],
           ].map(([href, label]) => (
             <a key={href} href={href} className="rounded-full border border-line px-4 py-2 hover:bg-surface">
@@ -222,12 +223,14 @@ export default async function ProductPage() {
         </div>
       </Section>
 
+      <VideoReviewsSection title="See it work in real homes" />
+
       <Section className="bg-surface">
         <SectionHeading eyebrow="What it cleans" title="Made for everyday marks" />
         <UseCases />
       </Section>
 
-      {genuineReviews.length > 0 && (
+      {displayedReviews.length > 0 && (
         <Section id="reviews">
           <SectionHeading eyebrow="Reviews" title="What customers say" />
           <ReviewsSection initialCount={4} />

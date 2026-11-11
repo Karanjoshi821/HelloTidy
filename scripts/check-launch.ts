@@ -8,6 +8,7 @@ import "./load-env";
 import { product } from "../src/config/products";
 import { reviews } from "../src/config/reviews";
 import { siteConfig } from "../src/config/site";
+import { videoReviews } from "../src/config/video-reviews";
 
 const problems: string[] = [];
 const warnings: string[] = [];
@@ -28,6 +29,14 @@ if (samples)
   problems.push(
     `${samples} sample (fake) review(s) in src/config/reviews.ts: replace with genuine reviews before running ads`,
   );
+
+const placeholderVideos = videoReviews.filter((v) => v.placeholder).length;
+if (placeholderVideos)
+  warnings.push(`${placeholderVideos} placeholder video review(s) in src/config/video-reviews.ts (local preview only)`);
+for (const v of videoReviews.filter((v) => !v.placeholder && !v.consent))
+  warnings.push(`video review "${v.id}" is hidden on the live site until the customer's permission is recorded (consent: true)`);
+if (process.env.NEXT_PUBLIC_PREVIEW_SAMPLES === "1")
+  warnings.push("NEXT_PUBLIC_PREVIEW_SAMPLES=1: placeholders show in local builds (never on Vercel production)");
 
 const requiredEnv = ["DATABASE_URL", "APP_SECRET", "NEXT_PUBLIC_SITE_URL"];
 for (const name of requiredEnv) if (!process.env[name]) problems.push(`env ${name} is not set`);

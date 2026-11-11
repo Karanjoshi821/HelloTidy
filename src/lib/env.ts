@@ -28,6 +28,23 @@ export function razorpayConfig() {
   return { keyId, keySecret, webhookSecret: read("RAZORPAY_WEBHOOK_SECRET") };
 }
 
+/**
+ * Shiprocket API user (Shiprocket → Settings → API Users; a different email
+ * from the main login). Delivery checks need the login and the pickup PIN.
+ * Pushing orders also needs the pickup location's nickname, and runs only on
+ * the live site unless SHIPROCKET_SYNC_ORDERS=1 (or =0 to stop it there).
+ */
+export function shiprocketConfig() {
+  const email = read("SHIPROCKET_EMAIL");
+  const password = read("SHIPROCKET_PASSWORD");
+  const pickupPincode = read("SHIPROCKET_PICKUP_PINCODE");
+  if (!email || !password || !pickupPincode || !/^[1-9]\d{5}$/.test(pickupPincode)) return null;
+  const pickupLocation = read("SHIPROCKET_PICKUP_LOCATION");
+  const sync = read("SHIPROCKET_SYNC_ORDERS");
+  const syncOrders = Boolean(pickupLocation) && (sync === "1" || (sync !== "0" && process.env.VERCEL_ENV === "production"));
+  return { email, password, pickupPincode, pickupLocation, syncOrders };
+}
+
 export function telegramConfig() {
   const botToken = read("TELEGRAM_BOT_TOKEN");
   const chatId = read("TELEGRAM_CHAT_ID");

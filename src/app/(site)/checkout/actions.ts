@@ -19,6 +19,7 @@ import { isRecoveryEnabled } from "@/lib/env";
 import { saveCartLead, sendCartLeadWebhook, withdrawCartLead } from "@/lib/recovery/service";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { getRequestContext } from "@/lib/security/request";
+import { checkServiceability } from "@/lib/shipping/shiprocket";
 import { cartLeadSchema, checkoutSchema, fieldErrors, type CartLeadInput, type CheckoutInput } from "@/lib/validation";
 
 type OrderRef = { orderToken: string; orderNumber: string; total: number };
@@ -43,6 +44,17 @@ export async function placeOrderAction(input: CheckoutInput): Promise<PlaceOrder
   const ctx = await getRequestContext();
   const limit = await rateLimit(`checkout:${ctx.ipHash}`, 10, 600);
   if (!limit.ok) return { ok: false, error: "Too many attempts. Please wait a few minutes and try again." };
+
+  // Couriers must reach the pincode (and collect cash, for COD). If Shiprocket
+  // can't be asked right now, the order goes through as before.
+  const courier = await checkServiceability(parsed.data.pincode);
+  if (courier && !courier.serviceable) {
+    const message = "Sorry, our couriers don't deliver to this pincode yet.";
+    return { ok: false, error: message, fieldErrors: { pincode: message } };
+  }
+  if (courier && !courier.cod && parsed.data.paymentMethod === "cod") {
+    return { ok: false, error: "Cash on Delivery isn't available for this pincode. Please pay online." };
+  }
 
   let ref: OrderRef | undefined;
   try {
@@ -152,6 +164,10 @@ export async function switchToCodAction(
   try {
     const order = await getOrderByToken(orderToken);
     if (!order) return { ok: false, error: "Order not found." };
+    const courier = await checkServiceability(order.pincode);
+    if (courier && !courier.cod) {
+      return { ok: false, error: "Cash on Delivery isn't available for this pincode. Please pay online." };
+    }
     const result = await switchToCodSafely(order, "customer");
     if (result.outcome === "switched") {
       applyStockEffect(result.stock);

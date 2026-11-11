@@ -25,7 +25,10 @@ import { cn } from "@/lib/utils";
 import { checkoutSchema, fieldErrors, type CheckoutInput } from "@/lib/validation";
 import { readAttribution } from "../analytics/attribution";
 import { useCart, type CartLine } from "../cart/cart-context";
+import { fetchDelivery, PINCODE_KEY } from "../product/delivery-check";
 import { PackThumb } from "../product/pack-thumb";
+
+const UNSERVICEABLE = "Sorry, our couriers don't deliver to this pincode yet.";
 import { useStorefront } from "../storefront-context";
 import { buttonClasses } from "../ui/button";
 import { Field, Honeypot, inputClasses, TextInput } from "../ui/field";
@@ -99,6 +102,10 @@ export function CheckoutForm({ onlinePayments, recoveryCalls }: { onlinePayments
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [pinLookup, setPinLookup] = useState<"idle" | "loading" | "found" | "notfound">("idle");
+  // What the couriers said about the typed pincode (null: not asked, or no answer).
+  const [pinCourier, setPinCourier] = useState<{ pin: string; serviceable: boolean | null; cod: boolean | null } | null>(
+    null,
+  );
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -120,10 +127,12 @@ export function CheckoutForm({ onlinePayments, recoveryCalls }: { onlinePayments
   });
 
   // COD eligibility doesn't depend on the chosen method, so check it first.
-  const codAvailable = useMemo(
+  const codWithinLimit = useMemo(
     () => tryQuote(lines, "prepaid", coupon, storefront).quote?.codAvailable ?? true,
     [lines, coupon, storefront],
   );
+  const codAtPincode = pinCourier?.cod !== false;
+  const codAvailable = codWithinLimit && codAtPincode;
   const method: PaymentMethod = paymentMethod === "cod" && !codAvailable && onlinePayments ? "prepaid" : paymentMethod;
   const { quote: totals, error: quoteError } = useMemo(
     () => tryQuote(lines, method, coupon, storefront),
@@ -158,6 +167,16 @@ export function CheckoutForm({ onlinePayments, recoveryCalls }: { onlinePayments
 
   async function lookupPincode(pin: string) {
     setPinLookup("loading");
+    setPinCourier(null);
+    // Couriers are asked alongside the city lookup; neither waits for the other.
+    void fetchDelivery(pin).then((d) => {
+      if (!d?.ok) return;
+      setPinCourier({ pin, serviceable: d.serviceable, cod: d.cod });
+      if (d.serviceable === false) setErrors((e) => ({ ...e, pincode: UNSERVICEABLE }));
+      try {
+        localStorage.setItem(PINCODE_KEY, pin);
+      } catch {}
+    });
     try {
       const res = await fetch(`/api/pincode/${pin}`);
       const data = (await res.json()) as { ok: boolean; city?: string; state?: string | null };
@@ -165,7 +184,7 @@ export function CheckoutForm({ onlinePayments, recoveryCalls }: { onlinePayments
         setCity(data.city);
         if (data.state) setState(data.state);
         setPinLookup("found");
-        setErrors((e) => ({ ...e, city: "", state: "", pincode: "" }));
+        setErrors((e) => ({ ...e, city: "", state: "", pincode: e.pincode === UNSERVICEABLE ? e.pincode : "" }));
       } else {
         setPinLookup("notfound");
       }
@@ -278,6 +297,12 @@ export function CheckoutForm({ onlinePayments, recoveryCalls }: { onlinePayments
       setErrors(errs);
       setFormError("Please check the highlighted fields.");
       focusFirstError(errs);
+      return;
+    }
+    if (pinCourier?.pin === input.pincode && pinCourier.serviceable === false) {
+      setErrors({ pincode: UNSERVICEABLE });
+      setFormError(UNSERVICEABLE);
+      focusFirstError({ pincode: UNSERVICEABLE });
       return;
     }
 
@@ -537,8 +562,10 @@ export function CheckoutForm({ onlinePayments, recoveryCalls }: { onlinePayments
               icon={<HandCoins className="size-5" />}
               title="Cash on Delivery"
               subtitle={
-                !codAvailable
-                  ? `Available on orders up to ${formatPaise(storefront.codMaxOrderValue)}`
+                !codAtPincode
+                  ? "Not available for this pincode. Please pay online"
+                  : !codAvailable
+                    ? `Available on orders up to ${formatPaise(storefront.codMaxOrderValue)}`
                   : codFeePaise > 0
                     ? `+${formatPaise(codFeePaise)} COD charge · pay when it arrives`
                     : "Pay when it arrives"

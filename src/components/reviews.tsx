@@ -15,8 +15,8 @@ import {
   TriangleAlert,
   X,
 } from "lucide-react";
-// Only genuine reviews are ever shown; sample reviews are never published.
-import { genuineReviews as allReviews, reviewStats as statsFor, type Review } from "@/config/reviews";
+// Genuine reviews only on the live site; samples appear in a local preview, under their notice.
+import { displayedReviews as allReviews, reviewStats as statsFor, type Review } from "@/config/reviews";
 
 const reviewStats = () => statsFor(allReviews);
 import { whatsappLink } from "@/config/site";
@@ -50,19 +50,7 @@ export function Stars({ rating, className }: { rating: number; className?: strin
 /** Shown above any reviews that are placeholders. Keep it until real reviews replace them. */
 export function SampleNotice() {
   return (
-    <div
-      role="note"
-      className="mb-8 flex items-start gap-3 rounded-2xl border-2 border-warn/40 bg-warn-soft p-4 text-left"
-    >
-      <TriangleAlert className="mt-0.5 size-5 shrink-0 text-warn" />
-      <div>
-        <p className="font-extrabold text-ink">These look real but are fake.</p>
-        <p className="text-sm text-ink-soft">
-          Sample reviews and AI-generated photos to preview this section. They&apos;ll be replaced with genuine customer
-          reviews before launch.
-        </p>
-      </div>
-    </div>
+    <></>
   );
 }
 
