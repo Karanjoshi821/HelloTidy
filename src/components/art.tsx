@@ -3,34 +3,36 @@ import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 
 /**
- * Small brand mark for tight spaces (admin, icons): a house-shaped speech
- * bubble with a sparkle. The same drawing is in public/brand/hello-tidy-mark.svg.
+ * Small brand mark for tight spaces (admin, print): the logo's lime sparkle
+ * over its wipe, on a dark green rounded square. Decorative, so no alt text.
  */
 export function LogoMark({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 64 64" className={cn("shrink-0", className)} aria-hidden="true">
-      <path
-        d="M32 9.5 55 29v21H27l-11 9v-9H9V29z"
-        fill="#0f7a3c"
-        stroke="#0f7a3c"
-        strokeWidth="8"
-        strokeLinejoin="round"
-      />
-      <path d="M32 18c1.4 9 5 12.6 14 14-9 1.4-12.6 5-14 14-1.4-9-5-12.6-14-14 9-1.4 12.6-5 14-14z" fill="#fff" />
-    </svg>
+    <Image
+      src="/brand/hello-tidy-mark.svg"
+      alt=""
+      width={64}
+      height={64}
+      unoptimized
+      className={cn("shrink-0", className)}
+    />
   );
 }
 
-/** The main logo: one-line wordmark with a sparkle for the dot of the i. */
+/**
+ * The main logo: "hello tidy" with a sparkle for the dot of the i and a wipe
+ * underneath. public/brand/ also has one-colour versions (-mono, -white) for
+ * print and stamps, the mark, and PNGs for uploads (logo, mark, avatar).
+ */
 export function BrandLogo({ onDark = false, className }: { onDark?: boolean; className?: string }) {
   return (
     <Image
       src={onDark ? "/brand/hello-tidy-logo-on-dark.svg" : "/brand/hello-tidy-logo.svg"}
       alt={siteConfig.name}
-      width={259}
-      height={65}
+      width={283}
+      height={100}
       unoptimized
-      className={cn("h-8 w-auto", className)}
+      className={cn("h-11 w-auto", className)}
     />
   );
 }

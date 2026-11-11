@@ -34,7 +34,7 @@ export function renderOg({ eyebrow, title, subtitle }: { eyebrow: string; title:
       >
         <div style={{ display: "flex" }}>
           {/* eslint-disable-next-line @next/next/no-img-element -- rendered by Satori, not the browser */}
-          <img src={logoSrc} width={240} height={60} alt="" />
+          <img src={logoSrc} width={230} height={81} alt="" />
         </div>
         <div style={{ display: "flex", flexDirection: "column" }}>
           <span
