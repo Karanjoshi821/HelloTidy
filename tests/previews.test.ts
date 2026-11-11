@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 /**
- * Placeholder content (sample reviews, placeholder video reviews) may show in
- * a local preview, and must never show in a Vercel production build.
+ * Placeholder video reviews may show in a local preview and never in a Vercel
+ * production build. Sample reviews follow SHOW_SAMPLE_REVIEWS.
  */
 async function load(env: Record<string, string | undefined>) {
   vi.resetModules();
@@ -21,7 +21,7 @@ describe("placeholder previews", () => {
   it("are off by default", async () => {
     const m = await load({});
     expect(m.showPlaceholders).toBe(false);
-    expect(m.displayedReviews.some((r) => r.sample)).toBe(false);
+    expect(m.displayedReviews).toEqual(m.SHOW_SAMPLE_REVIEWS ? m.reviews : m.genuineReviews);
     expect(m.displayedVideoReviews.some((v) => v.placeholder || !v.consent)).toBe(false);
   });
 
@@ -37,7 +37,8 @@ describe("placeholder previews", () => {
     async (env) => {
       const m = await load({ NEXT_PUBLIC_PREVIEW_SAMPLES: "1", ...env });
       expect(m.showPlaceholders).toBe(false);
-      expect(m.displayedReviews.some((r) => r.sample)).toBe(false);
+      // Sample reviews follow SHOW_SAMPLE_REVIEWS (they carry their own notice); placeholder videos never show.
+      expect(m.displayedReviews).toEqual(m.SHOW_SAMPLE_REVIEWS ? m.reviews : m.genuineReviews);
       expect(m.displayedVideoReviews.some((v) => v.placeholder || !v.consent)).toBe(false);
     },
   );

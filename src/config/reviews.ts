@@ -148,11 +148,18 @@ export function reviewStats(list: Review[] = reviews) {
   return { count, average, distribution, hasSamples: list.some((r) => r.sample) };
 }
 
-/** The only reviews sent to Google, and the only ones the live site shows. */
+/** The only reviews sent to Google as structured data. */
 export const genuineReviews = reviews.filter((r) => !r.sample);
 
 /**
- * Reviews the site shows: genuine ones, plus the samples in a local preview
- * (NEXT_PUBLIC_PREVIEW_SAMPLES=1). The live site never shows samples.
+ * Karan's call (11 Nov 2026): show the sample reviews on the live site for now,
+ * always under the "these are fake" notice and labelled "Sample review". They
+ * never reach structured data. Set to false to hide them again.
  */
-export const displayedReviews = showPlaceholders ? reviews : genuineReviews;
+export const SHOW_SAMPLE_REVIEWS = true;
+
+/**
+ * Reviews the site shows: genuine ones, plus the samples while
+ * SHOW_SAMPLE_REVIEWS is on or in a local preview (NEXT_PUBLIC_PREVIEW_SAMPLES=1).
+ */
+export const displayedReviews = SHOW_SAMPLE_REVIEWS || showPlaceholders ? reviews : genuineReviews;

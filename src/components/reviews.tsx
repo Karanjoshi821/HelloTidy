@@ -15,7 +15,7 @@ import {
   TriangleAlert,
   X,
 } from "lucide-react";
-// Genuine reviews only on the live site; samples appear in a local preview, under their notice.
+// Genuine reviews, plus the samples while SHOW_SAMPLE_REVIEWS is on; samples always sit under their notice.
 import { displayedReviews as allReviews, reviewStats as statsFor, type Review } from "@/config/reviews";
 
 const reviewStats = () => statsFor(allReviews);

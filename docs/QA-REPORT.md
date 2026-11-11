@@ -1,6 +1,6 @@
 # QA report
 
-Run 2026-11-11 06:43 UTC against `http://localhost:3423` (production build, real Chrome). Checklist: [QA-CHECKLIST.md](QA-CHECKLIST.md).
+Run 2026-11-11 10:43 UTC against `http://localhost:3423` (production build, real Chrome). Checklist: [QA-CHECKLIST.md](QA-CHECKLIST.md).
 
 **82 / 82 checks passed.**
 
@@ -25,7 +25,7 @@ Run 2026-11-11 06:43 UTC against `http://localhost:3423` (production build, real
 | C5 | Sticky bar on the first screen, hidden while Buy is visible, back after it | ✅ Pass |
 | C6 | Buy now opens checkout with the pack and quantity | ✅ Pass |
 | C7 | Add to cart adds the item and opens the cart | ✅ Pass |
-| C8 | Sample reviews are never shown (no section, rating or menu link) | ✅ Pass |
+| C8 | Sample reviews always sit under the fake notice and say "sample" | ✅ Pass |
 | C9 | Review photo lightbox (only when genuine reviews have photos) | ✅ Pass |
 | C11 | Before/after slider works with mouse drag and keyboard | ✅ Pass |
 | C10 | No ratings from sample reviews in structured data | ✅ Pass |
