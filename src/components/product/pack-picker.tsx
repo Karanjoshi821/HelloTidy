@@ -364,7 +364,11 @@ export function StickyBuyBar({
           type="button"
           onClick={buyNow}
           disabled={disabled}
-          className="inline-flex h-12 items-center gap-2 rounded-full bg-brand px-6 font-bold text-white shadow-lift disabled:opacity-50"
+          className={cn(
+            "relative inline-flex h-12 items-center gap-2 rounded-full bg-brand px-6 font-bold text-white shadow-lift disabled:opacity-50",
+            // Rings only while the bar is on screen and the pack can be bought.
+            visible && !disabled && "animate-buy-ring",
+          )}
         >
           <Zap className="size-4" /> Buy now
         </button>
