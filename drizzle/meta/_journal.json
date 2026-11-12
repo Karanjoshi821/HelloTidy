@@ -50,6 +50,13 @@
       "when": 1794376915426,
       "tag": "0006_visitors",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794442890289,
+      "tag": "0007_mobile_devices",
+      "breakpoints": true
     }
   ]
 }

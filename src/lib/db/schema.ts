@@ -229,6 +229,34 @@ export const adminSessions = pgTable(
   (t) => [index("admin_sessions_user_idx").on(t.userId)],
 );
 
+/**
+ * Phones running the DulyPaid admin app, for push notifications (FCM). Each
+ * device belongs to the app session it signed in with, so signing out (or
+ * "sign out everywhere", or expiry) stops pushes to that phone.
+ */
+export const adminDevices = pgTable(
+  "admin_devices",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /** FCM registration token. */
+    token: text("token").notNull(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => adminUsers.id, { onDelete: "cascade" }),
+    sessionId: text("session_id")
+      .notNull()
+      .references(() => adminSessions.id, { onDelete: "cascade" }),
+    platform: text("platform").notNull().default("android"),
+    deviceName: text("device_name"),
+    notifyOrders: boolean("notify_orders").notNull().default(true),
+    notifyAlerts: boolean("notify_alerts").notNull().default(true),
+    notifyMessages: boolean("notify_messages").notNull().default(true),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("admin_devices_token_idx").on(t.token), index("admin_devices_user_idx").on(t.userId)],
+);
+
 /** Fixed-window counters shared by every serverless instance. */
 export const rateLimits = pgTable("rate_limits", {
   key: text("key").primaryKey(),

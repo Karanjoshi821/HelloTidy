@@ -46,6 +46,20 @@ export function shiprocketConfig() {
   return { email, password, pickupPincode, pickupLocation, syncOrders };
 }
 
+/**
+ * Firebase Cloud Messaging for the DulyPaid admin app (new-order "cha-ching").
+ * From a service account key (Firebase console → Project settings → Service
+ * accounts → Generate new private key). The private key may be pasted with
+ * literal "\n" sequences; they are turned back into newlines here.
+ */
+export function firebaseConfig() {
+  const projectId = read("FIREBASE_PROJECT_ID");
+  const clientEmail = read("FIREBASE_CLIENT_EMAIL");
+  const privateKey = read("FIREBASE_PRIVATE_KEY")?.replace(/\\n/g, "\n");
+  if (!projectId || !clientEmail || !privateKey) return null;
+  return { projectId, clientEmail, privateKey };
+}
+
 export function telegramConfig() {
   const botToken = read("TELEGRAM_BOT_TOKEN");
   const chatId = read("TELEGRAM_CHAT_ID");

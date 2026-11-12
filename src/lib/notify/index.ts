@@ -3,6 +3,7 @@ import { sendGa4Purchase } from "../analytics/ga4";
 import { sendPurchaseEvent } from "../analytics/meta-capi";
 import type { PaidResult } from "../orders/service";
 import { sendOrderConfirmationEmail, sendOwnerAlertEmail, sendOwnerOrderEmail } from "./email";
+import { pushAlert, pushNewMessage, pushNewOrder } from "./push";
 import { alertTelegramMessage, newMessageTelegramMessage, newOrderTelegramMessage, sendTelegram } from "./telegram";
 import type { OrderWithItems } from "./types";
 import { sendOrderWebhook } from "./webhook";
@@ -22,8 +23,9 @@ export async function notifyOrderConfirmed(order: OrderWithItems): Promise<void>
     sendPurchaseEvent(order),
     syncOrderToShiprocket(order.id),
     sendGa4Purchase(order),
+    pushNewOrder(order),
   ]);
-  const channels = ["telegram", "webhook", "customer-email", "owner-email", "meta-capi", "shiprocket", "ga4"];
+  const channels = ["telegram", "webhook", "customer-email", "owner-email", "meta-capi", "shiprocket", "ga4", "app-push"];
   results.forEach((result, i) => {
     if (result.status === "rejected") {
       console.error(`[notify] ${channels[i]} failed for ${order.orderNumber}:`, result.reason);
@@ -36,6 +38,7 @@ export async function notifyOwnerAlert(text: string, orderId?: string): Promise<
   const results = await Promise.allSettled([
     sendTelegram(alertTelegramMessage(text, orderId)),
     sendOwnerAlertEmail(`⚠️ Store alert`, text),
+    pushAlert(text, orderId),
   ]);
   results.forEach((r) => r.status === "rejected" && console.error("[notify] alert failed:", r.reason));
   console.warn(`[alert] ${text}`);
@@ -61,9 +64,6 @@ export async function notifyPaid(result: PaidResult): Promise<void> {
 }
 
 export async function notifyNewMessage(input: { name: string; topic: string; message: string }): Promise<void> {
-  try {
-    await sendTelegram(newMessageTelegramMessage(input));
-  } catch (error) {
-    console.error("[notify] telegram failed for contact message:", error);
-  }
+  const results = await Promise.allSettled([sendTelegram(newMessageTelegramMessage(input)), pushNewMessage(input)]);
+  results.forEach((r) => r.status === "rejected" && console.error("[notify] contact message alert failed:", r.reason));
 }

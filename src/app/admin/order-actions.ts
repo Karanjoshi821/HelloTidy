@@ -1,6 +1,6 @@
 "use server";
 
-import { refresh } from "next/cache";
+import { refreshAdminView as refresh } from "@/lib/admin-refresh";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { z } from "zod";

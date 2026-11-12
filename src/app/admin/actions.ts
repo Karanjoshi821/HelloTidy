@@ -1,6 +1,6 @@
 "use server";
 
-import { refresh } from "next/cache";
+import { refreshAdminView as refresh } from "@/lib/admin-refresh";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
@@ -8,16 +8,16 @@ import type { ActionResult } from "@/lib/action-result";
 import { failure } from "@/lib/admin-actions";
 import { recordAudit } from "@/lib/audit";
 import { requireAdmin } from "@/lib/auth/dal";
+import { checkAdminCredentials } from "@/lib/auth/login";
 import { createSession, destroyAllSessions, destroyOtherSessions, destroySession } from "@/lib/auth/session";
 import { updateOwnName } from "@/lib/auth/staff";
 import { setContactMessageStatus } from "@/lib/contact/service";
 import { getDb } from "@/lib/db";
 import { adminUsers } from "@/lib/db/schema";
 import { textField } from "@/lib/form";
-import { getDummyHash, hashPassword, verifyPassword } from "@/lib/security/password";
-import { isRateLimited, rateLimit } from "@/lib/security/rate-limit";
+import { hashPassword, verifyPassword } from "@/lib/security/password";
+import { rateLimit } from "@/lib/security/rate-limit";
 import { getRequestContext } from "@/lib/security/request";
-import { sha256Hex } from "@/lib/security/crypto";
 import { loginSchema, passwordSchema } from "@/lib/validation";
 
 export type { ActionResult } from "@/lib/action-result";
@@ -39,29 +39,11 @@ export async function loginAction(_prev: ActionResult, formData: FormData): Prom
 
   const { email, password, next } = parsed.data;
   const ctx = await getRequestContext();
-  // Failures are counted per email+IP, so a stranger guessing your email can't lock you out;
-  // the per-email cap (50) only slows a distributed attack.
-  const emailKey = sha256Hex(email).slice(0, 32);
-  const pairKey = `login-fail:${emailKey}:${ctx.ipHash}`;
-  const globalKey = `login-fail:${emailKey}`;
-  const [byIp, pairBlocked, globalBlocked] = await Promise.all([
-    rateLimit(`login-ip:${ctx.ipHash}`, 20, 900),
-    isRateLimited(pairKey, 5, 900),
-    isRateLimited(globalKey, 50, 900),
-  ]);
-  if (!byIp.ok || pairBlocked || globalBlocked) {
-    return { ok: false, message: "Too many sign-in attempts. Please wait 15 minutes and try again." };
-  }
+  const check = await checkAdminCredentials(email, password, ctx);
+  if (!check.ok) return { ok: false, message: check.message };
+  const { user } = check;
 
   const db = await getDb();
-  const [user] = await db.select().from(adminUsers).where(eq(adminUsers.email, email)).limit(1);
-  // Always run a hash comparison so response time doesn't reveal which emails exist.
-  const valid = await verifyPassword(password, user?.passwordHash ?? (await getDummyHash()));
-  if (!user || !valid || !user.active) {
-    await Promise.all([rateLimit(pairKey, 5, 900), rateLimit(globalKey, 50, 900)]);
-    return { ok: false, message: "Incorrect email or password." };
-  }
-
   await createSession(user.id, ctx.userAgent);
   await db.update(adminUsers).set({ lastLoginAt: new Date() }).where(eq(adminUsers.id, user.id));
   await recordAudit(db, {

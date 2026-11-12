@@ -1,5 +1,5 @@
 import "server-only";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { connection } from "next/server";
 import { and, desc, eq, gt, lt, ne } from "drizzle-orm";
 import { getDb } from "../db";
@@ -45,12 +45,29 @@ export async function createSession(userId: string, userAgent: string): Promise<
   (await cookies()).set(SESSION_COOKIE, token, cookieOptions(expiresAt));
 }
 
+/** Session tokens from randomToken(32): base64url, 43 characters. */
+const BEARER = /^Bearer\s+([A-Za-z0-9_-]{20,100})$/;
+
+/**
+ * The session token for this request: the admin cookie (web admin) or, when
+ * there is none, an `Authorization: Bearer` header (the DulyPaid app). Both
+ * are rows in admin_sessions, so roles, expiry and "sign out everywhere" apply
+ * to phones too. A bearer token is never sent automatically by a browser, so
+ * accepting it adds no CSRF exposure.
+ */
+async function requestToken(): Promise<string | null> {
+  const cookie = (await cookies()).get(SESSION_COOKIE)?.value;
+  if (cookie) return cookie.length <= 100 ? cookie : null;
+  const auth = (await headers()).get("authorization");
+  return auth?.match(BEARER)?.[1] ?? null;
+}
+
 /** Returns the signed-in admin, or null. Every call hits the database. */
 export async function validateSession(): Promise<SessionUser | null> {
   // Admin data is per request and must never be part of a prerender.
   await connection();
-  const token = (await cookies()).get(SESSION_COOKIE)?.value;
-  if (!token || token.length > 100) return null;
+  const token = await requestToken();
+  if (!token) return null;
 
   const db = await getDb();
   const [row] = await db
@@ -83,8 +100,55 @@ export async function destroySession(): Promise<void> {
 }
 
 async function currentSessionId(): Promise<string | null> {
-  const token = (await cookies()).get(SESSION_COOKIE)?.value;
-  return token && token.length <= 100 ? sha256Hex(token) : null;
+  const token = await requestToken();
+  return token ? sha256Hex(token) : null;
+}
+
+// ─── DulyPaid app (bearer) sessions ──────────────────────────────────────────
+
+/** Phones stay signed in for 60 days, renewed whenever the app is used. */
+const MOBILE_SESSION_DAYS = 60;
+/** Marks app sessions in admin_sessions.user_agent (shown in "Signed-in devices"). */
+export const MOBILE_SESSION_PREFIX = "DulyPaid app";
+
+const days = (n: number) => n * 24 * 60 * 60 * 1000;
+
+/** Creates an app session and returns its raw token (only ever sent to the app). */
+export async function createMobileSession(userId: string, deviceName: string): Promise<{ token: string; expiresAt: Date }> {
+  const db = await getDb();
+  const token = randomToken(32);
+  const expiresAt = new Date(Date.now() + days(MOBILE_SESSION_DAYS));
+  await db.insert(adminSessions).values({
+    id: sha256Hex(token),
+    userId,
+    expiresAt,
+    userAgent: `${MOBILE_SESSION_PREFIX} · ${deviceName}`.slice(0, 300),
+  });
+  await db.delete(adminSessions).where(and(eq(adminSessions.userId, userId), lt(adminSessions.expiresAt, new Date())));
+  return { token, expiresAt };
+}
+
+/** The admin_sessions id for this request's bearer token (null for cookie or anonymous requests). */
+export async function bearerSessionId(): Promise<string | null> {
+  const auth = (await headers()).get("authorization");
+  const token = auth?.match(BEARER)?.[1];
+  return token ? sha256Hex(token) : null;
+}
+
+/** Slides an app session forward once it is more than halfway through its life. */
+export async function renewMobileSession(sessionId: string): Promise<void> {
+  const db = await getDb();
+  const renewBefore = new Date(Date.now() + days(MOBILE_SESSION_DAYS / 2));
+  await db
+    .update(adminSessions)
+    .set({ expiresAt: new Date(Date.now() + days(MOBILE_SESSION_DAYS)) })
+    .where(and(eq(adminSessions.id, sessionId), lt(adminSessions.expiresAt, renewBefore)));
+}
+
+/** Signs out one session by its id (app logout). Its devices go with it (cascade). */
+export async function destroySessionById(sessionId: string): Promise<void> {
+  const db = await getDb();
+  await db.delete(adminSessions).where(eq(adminSessions.id, sessionId));
 }
 
 /** The user's signed-in devices, newest first, with the current one marked. */
