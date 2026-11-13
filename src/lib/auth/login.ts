@@ -14,7 +14,7 @@ export type CredentialCheck =
   | { ok: false; reason: "rate_limited" | "invalid"; message: string };
 
 /**
- * Email + password check shared by the web login form and the DulyPaid app.
+ * Email + password check shared by the web login form and the Hello Tidy admin app.
  * Failures are counted per email+IP, so a stranger guessing your email can't
  * lock you out; the per-email cap (50) only slows a distributed attack.
  */

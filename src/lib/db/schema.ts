@@ -230,7 +230,7 @@ export const adminSessions = pgTable(
 );
 
 /**
- * Phones running the DulyPaid admin app, for push notifications (FCM). Each
+ * Phones running the Hello Tidy admin app, for push notifications (FCM). Each
  * device belongs to the app session it signed in with, so signing out (or
  * "sign out everywhere", or expiry) stops pushes to that phone.
  */

@@ -47,7 +47,7 @@ export function shiprocketConfig() {
 }
 
 /**
- * Firebase Cloud Messaging for the DulyPaid admin app (new-order "cha-ching").
+ * Firebase Cloud Messaging for the Hello Tidy admin app (new-order "cha-ching").
  * From a service account key (Firebase console → Project settings → Service
  * accounts → Generate new private key). The private key may be pasted with
  * literal "\n" sequences; they are turned back into newlines here.

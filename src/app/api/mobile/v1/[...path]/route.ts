@@ -4,7 +4,7 @@ import { orderRoutes } from "@/lib/mobile/routes/orders";
 import { storeRoutes } from "@/lib/mobile/routes/store";
 
 /**
- * JSON API for the DulyPaid admin app (Android). Authorization: Bearer <token>
+ * JSON API for the Hello Tidy admin app (Android). Authorization: Bearer <token>
  * from POST /api/mobile/v1/auth/login. Reads use the same lib/* functions as
  * the web admin pages; writes run the same Server Actions. See src/lib/mobile.
  */

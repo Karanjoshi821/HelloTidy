@@ -2,7 +2,7 @@ import "server-only";
 import { ZodError } from "zod";
 
 /**
- * JSON plumbing for the DulyPaid app API (/api/mobile/v1). Every error has the
+ * JSON plumbing for the Hello Tidy admin app API (/api/mobile/v1). Every error has the
  * shape { error: { code, message } } so the app can branch on `code`.
  */
 export type ApiErrorCode =

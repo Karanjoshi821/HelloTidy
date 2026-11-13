@@ -204,7 +204,7 @@ export const accountRoutes: Route[] = [
       const result = await sendPush([token], {
         kind: "orders",
         title: "New order · ₹549",
-        body: "TEST · This is how a new order sounds on DulyPaid",
+        body: "TEST · This is how a new order sounds on Hello Tidy",
         data: { type: "test" },
         tag: "test",
       });

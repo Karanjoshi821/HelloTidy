@@ -50,7 +50,7 @@ const BEARER = /^Bearer\s+([A-Za-z0-9_-]{20,100})$/;
 
 /**
  * The session token for this request: the admin cookie (web admin) or, when
- * there is none, an `Authorization: Bearer` header (the DulyPaid app). Both
+ * there is none, an `Authorization: Bearer` header (the Hello Tidy admin app). Both
  * are rows in admin_sessions, so roles, expiry and "sign out everywhere" apply
  * to phones too. A bearer token is never sent automatically by a browser, so
  * accepting it adds no CSRF exposure.
@@ -104,12 +104,12 @@ async function currentSessionId(): Promise<string | null> {
   return token ? sha256Hex(token) : null;
 }
 
-// ─── DulyPaid app (bearer) sessions ──────────────────────────────────────────
+// ─── Admin app (bearer) sessions ─────────────────────────────────────────────
 
 /** Phones stay signed in for 60 days, renewed whenever the app is used. */
 const MOBILE_SESSION_DAYS = 60;
 /** Marks app sessions in admin_sessions.user_agent (shown in "Signed-in devices"). */
-export const MOBILE_SESSION_PREFIX = "DulyPaid app";
+export const MOBILE_SESSION_PREFIX = "Hello Tidy app";
 
 const days = (n: number) => n * 24 * 60 * 60 * 1000;
 

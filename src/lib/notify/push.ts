@@ -6,7 +6,7 @@ import { formatPaise } from "../money";
 import type { OrderWithItems } from "./types";
 
 /**
- * Push notifications to the DulyPaid admin app through Firebase Cloud
+ * Push notifications to the Hello Tidy admin app through Firebase Cloud
  * Messaging (HTTP v1 API). Off until FIREBASE_* is set, like every other
  * integration. The app creates the Android channels; the "orders" channel
  * carries the cash-register sound, so the "cha-ching" plays even when the
