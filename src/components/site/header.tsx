@@ -73,7 +73,7 @@ export function Header() {
         <div className="flex items-center gap-1">
           <Suspense
             fallback={
-              <span className="-ml-2 grid size-10 place-items-center md:hidden" aria-hidden="true">
+              <span className="-ml-2 grid size-10 place-items-center lg:hidden" aria-hidden="true">
                 <Menu className="size-5" />
               </span>
             }
@@ -82,7 +82,7 @@ export function Header() {
           </Suspense>
           <Logo />
         </div>
-        <nav aria-label="Main" className="hidden items-center gap-1 md:flex">
+        <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">
           {navLinks.map((link) => (
             <Link
               key={link.href}
