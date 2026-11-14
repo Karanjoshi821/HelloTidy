@@ -51,10 +51,6 @@ export type VideoReview = {
 
 const clip1 = { src: "/videos/reviews/review-1.mp4", poster: "/videos/reviews/review-1.jpg", duration: 17 };
 const wall = { before: "/videos/reviews/review-1-wall-before.jpg", after: "/videos/reviews/review-1-wall-after.jpg" };
-const shoes = {
-  before: "/videos/reviews/review-1-shoes-before.jpg",
-  after: "/videos/reviews/review-1-shoes-after.jpg",
-};
 
 export const videoReviews: VideoReview[] = [
   {
@@ -66,24 +62,39 @@ export const videoReviews: VideoReview[] = [
     name: "Vanshika S.",
     consent: true,
   },
-  // Placeholders: same clip until the other customers' videos arrive.
-  { id: "placeholder-2", ...clip1, ...wall, title: "Crayon art on a painted wall", placeholder: true, consent: false },
+  // Ramesh, Subha and Ananya agreed to share their clips (Karan confirmed, 15 Nov 2026). First name and initial only.
   {
-    id: "placeholder-3",
-    ...clip1,
-    ...shoes,
-    title: "Scuffed sneakers back to white",
-    label: "home",
-    placeholder: true,
-    consent: false,
+    id: "review-2",
+    src: "/videos/reviews/review-2.mp4",
+    poster: "/videos/reviews/review-2.jpg",
+    duration: 17,
+    before: "/videos/reviews/review-2-before.jpg",
+    after: "/videos/reviews/review-2-after.jpg",
+    title: "Grime off white sneakers, stains off the wall",
+    name: "Ramesh K.",
+    consent: true,
   },
   {
-    id: "placeholder-4",
-    ...clip1,
-    ...wall,
-    title: "Kitchen tiles and switchboards",
-    placeholder: true,
-    consent: false,
+    id: "review-3",
+    src: "/videos/reviews/review-3.mp4",
+    poster: "/videos/reviews/review-3.jpg",
+    duration: 36,
+    before: "/videos/reviews/review-3-before.jpg",
+    after: "/videos/reviews/review-3-after.jpg",
+    title: "Crayon off the wall, grime off switchboards",
+    name: "Subha N.",
+    consent: true,
+  },
+  {
+    id: "review-4",
+    src: "/videos/reviews/review-4.mp4",
+    poster: "/videos/reviews/review-4.jpg",
+    duration: 37,
+    before: "/videos/reviews/review-4-before.jpg",
+    after: "/videos/reviews/review-4-after.jpg",
+    title: "Kid's smudges off the wall, a switchboard like new",
+    name: "Ananya R.",
+    consent: true,
   },
 ];
 
