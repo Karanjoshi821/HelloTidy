@@ -1,6 +1,6 @@
 # QA report
 
-Run 2026-11-11 17:56 UTC against `http://localhost:3423` (production build, real Chrome). Checklist: [QA-CHECKLIST.md](QA-CHECKLIST.md).
+Run 2026-11-14 21:00 UTC against `http://localhost:3417` (production build, real Chrome). Checklist: [QA-CHECKLIST.md](QA-CHECKLIST.md).
 
 **83 / 83 checks passed.**
 
@@ -25,10 +25,10 @@ Run 2026-11-11 17:56 UTC against `http://localhost:3423` (production build, real
 | C5 | Sticky bar on the first screen, hidden while Buy is visible, back after it | ✅ Pass |
 | C6 | Buy now opens checkout with the pack and quantity | ✅ Pass |
 | C7 | Add to cart adds the item and opens the cart | ✅ Pass |
-| C8 | s always sit under the fake notice and say "sample" | ✅ Pass |
+| C8 | Sample reviews always sit under the fake notice and say "sample" | ✅ Pass |
 | C9 | Review photo lightbox (only when genuine reviews have photos) | ✅ Pass |
 | C11 | Before/after slider works with mouse drag and keyboard | ✅ Pass |
-| C10 | No ratings from s in structured data | ✅ Pass |
+| C10 | No ratings from sample reviews in structured data | ✅ Pass |
 | C12 | Video reviews: tapping a card plays the clip with controls; Escape closes | ✅ Pass |
 | D1 | Cart quantity, limit, remove and empty state | ✅ Pass |
 | D2 | Upsell suggests and adds the bigger pack | ✅ Pass |
