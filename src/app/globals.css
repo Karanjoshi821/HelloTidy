@@ -262,6 +262,33 @@ details[open] .chevron {
 .animate-toast-in {
   animation: toast-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+.animate-sheet-up {
+  animation: sheet-up 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+/* Phone checkout (checkout-form.tsx): its fixed bottom bar takes the WhatsApp bubble's place, and
+ * the cookie banner, the footer and focused fields keep clear of it. The bar sets --checkout-bar-h. */
+@media (width < 64rem) {
+  html:has([data-checkout-bar]) {
+    scroll-padding-bottom: calc(var(--checkout-bar-h, 10rem) + 1rem);
+  }
+  body:has([data-checkout-bar]) .whatsapp-float {
+    display: none;
+  }
+  body:has([data-checkout-bar]) footer {
+    padding-bottom: calc(var(--checkout-bar-h, 10rem) + 1.5rem);
+  }
+  body:has([data-checkout-bar]) .cookie-banner {
+    bottom: calc(var(--checkout-bar-h, 10rem) + 0.75rem);
+  }
+}
 @keyframes drawer-in {
   from {
     transform: translateX(-100%);

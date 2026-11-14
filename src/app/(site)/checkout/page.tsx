@@ -13,10 +13,13 @@ export const metadata: Metadata = {
 
 export default function CheckoutPage() {
   return (
-    <Container className="py-8 sm:py-12">
-      <Suspense fallback={<CheckoutSkeleton />}>
-        <CheckoutForm onlinePayments={isRazorpayEnabled()} recoveryCalls={isRecoveryEnabled()} />
-      </Suspense>
-    </Container>
+    // A soft tinted page so the white cards stand out, as in app checkouts.
+    <div className="bg-surface">
+      <Container className="py-5 sm:py-10">
+        <Suspense fallback={<CheckoutSkeleton />}>
+          <CheckoutForm onlinePayments={isRazorpayEnabled()} recoveryCalls={isRecoveryEnabled()} />
+        </Suspense>
+      </Container>
+    </div>
   );
 }

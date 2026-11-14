@@ -2,8 +2,38 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, useTransition, type FormEvent, type ReactNode } from "react";
-import { HandCoins, Loader2, LockKeyhole, MapPin, Minus, Plus, Smartphone, Tag, X } from "lucide-react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  useTransition,
+  type FormEvent,
+} from "react";
+import { createPortal } from "react-dom";
+import {
+  BadgePercent,
+  Check,
+  ChevronRight,
+  ChevronUp,
+  HandCoins,
+  Loader2,
+  LockKeyhole,
+  MapPin,
+  Minus,
+  Plus,
+  ReceiptText,
+  RotateCcw,
+  ShieldCheck,
+  Smartphone,
+  Tag,
+  Truck,
+  Wallet,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import { commerce, product } from "@/config/products";
 import { siteConfig } from "@/config/site";
 import {
@@ -71,6 +101,15 @@ function linesFromUrl(params: URLSearchParams, storefront: Storefront): CartLine
   return [{ packId: pack.id, qty: clampQty(params.get("qty")) }];
 }
 
+/** Desktop layout (Tailwind's lg): the summary column replaces the phone's bottom bar. */
+const WIDE = "(min-width: 64rem)";
+function subscribeWide(onChange: () => void) {
+  const mq = window.matchMedia(WIDE);
+  mq.addEventListener("change", onChange);
+  return () => mq.removeEventListener("change", onChange);
+}
+const isWide = () => window.matchMedia(WIDE).matches;
+
 /** A saved order whose online payment hasn't completed yet. */
 type PendingPayment = { token: string; orderNumber: string; total: number };
 
@@ -124,9 +163,32 @@ export function CheckoutForm({ onlinePayments, recoveryCalls }: { onlinePayments
   const checkoutId = useRef(uuid());
   const formRef = useRef<HTMLFormElement>(null);
 
-  // Tracked only to save the cart for a recovery call; the order itself reads the form on submit.
+  // Tracked to save the cart for a recovery call and to show "Delivering to" in the phone's bottom bar;
+  // the order itself reads the form on submit.
   const [contactName, setContactName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
+  const [address1Text, setAddress1Text] = useState("");
+  const [pincodeText, setPincodeText] = useState("");
+  const [payOpen, setPayOpen] = useState(false);
+  const payButtonRef = useRef<HTMLButtonElement>(null);
+  const pendingRef = useRef<HTMLDivElement>(null);
+  // The form error shows once: in the summary column on desktop, in the bottom bar on phones.
+  const wide = useSyncExternalStore(subscribeWide, isWide, () => false);
+  // The bottom bar publishes its height so the cookie banner, footer and focused fields clear it (globals.css).
+  const barRef = useCallback((el: HTMLDivElement | null) => {
+    if (!el) return;
+    const root = document.documentElement;
+    const observer = new ResizeObserver(() => root.style.setProperty("--checkout-bar-h", `${el.offsetHeight}px`));
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty("--checkout-bar-h");
+    };
+  }, []);
+  const closePay = useCallback(() => {
+    setPayOpen(false);
+    payButtonRef.current?.focus();
+  }, []);
   const [callConsent, setCallConsent] = useState(false);
   const cartLead = useCartLead({
     enabled: recoveryCalls,
@@ -148,6 +210,20 @@ export function CheckoutForm({ onlinePayments, recoveryCalls }: { onlinePayments
     () => tryQuote(lines, method, coupon, storefront),
     [lines, method, coupon, storefront],
   );
+
+  // What each method would cost, for the phone's payment sheet.
+  const methodTotals = useMemo(
+    () => ({
+      prepaid: tryQuote(lines, "prepaid", coupon, storefront).quote?.total ?? null,
+      cod: tryQuote(lines, "cod", coupon, storefront).quote?.total ?? null,
+    }),
+    [lines, coupon, storefront],
+  );
+
+  // A failed or dismissed payment shows its options card; bring it into view (on phones it sits at the top).
+  useEffect(() => {
+    if (pendingPayment) pendingRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [pendingPayment]);
 
   // InitiateCheckout once the items are known.
   const tracked = useRef(false);
@@ -328,7 +404,21 @@ export function CheckoutForm({ onlinePayments, recoveryCalls }: { onlinePayments
     const first = Object.keys(errs).find((k) => errs[k]);
     if (!first) return;
     const el = formRef.current?.querySelector<HTMLElement>(`[name="${first}"]`);
-    el?.focus();
+    // Centred, so the phone's fixed bottom bar never covers the field.
+    el?.focus({ preventScroll: true });
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  /** "Add" / "Change" in the phone's bottom bar: jump to the first empty detail (or the address). */
+  function goToDetails() {
+    const form = formRef.current;
+    if (!form) return;
+    const fields = ["name", "phone", "pincode", "address1"].map((n) =>
+      form.querySelector<HTMLInputElement>(`input[name="${n}"]`),
+    );
+    const target = fields.find((el) => el && !el.value.trim()) ?? fields[3];
+    target?.focus({ preventScroll: true });
+    target?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
   function retryPayment() {
@@ -380,6 +470,33 @@ export function CheckoutForm({ onlinePayments, recoveryCalls }: { onlinePayments
 
   const codFeePaise = storefront.codFee;
   const locked = pending || pendingPayment !== null;
+  // On phones the bottom bar can switch method only when both are possible.
+  const canSwitch = onlinePayments && codAvailable;
+  const mrpSaving = Math.max(totals.mrpTotal - totals.subtotal, 0);
+  const savings = mrpSaving + totals.discount;
+  const firstName = contactName.trim().split(/\s+/)[0] ?? "";
+  const addressLine = [address1Text.trim(), [city.trim(), pincodeText].filter(Boolean).join(" ")]
+    .filter(Boolean)
+    .join(", ");
+  const itemsLabel = `${totals.itemCount} item${totals.itemCount > 1 ? "s" : ""}`;
+  const payOptions: PayOption[] = [
+    {
+      value: "prepaid",
+      icon: Smartphone,
+      title: "Pay online",
+      subtitle: "UPI, cards, netbanking, wallets",
+      total: methodTotals.prepaid,
+      badge: codFeePaise > 0 ? `Save ${formatPaise(codFeePaise)}` : undefined,
+    },
+    {
+      value: "cod",
+      icon: HandCoins,
+      title: "Cash on Delivery",
+      subtitle:
+        codFeePaise > 0 ? `+${formatPaise(codFeePaise)} COD charge · pay when it arrives` : "Pay when it arrives",
+      total: methodTotals.cod,
+    },
+  ];
 
   return (
     <form
@@ -388,281 +505,355 @@ export function CheckoutForm({ onlinePayments, recoveryCalls }: { onlinePayments
       noValidate
       // Hides names, phone and address from Microsoft Clarity recordings.
       data-clarity-mask="true"
-      className="relative grid gap-8 lg:grid-cols-[1fr_400px] lg:items-start"
+      // Phones: one column of cards above a fixed bottom bar. Both column wrappers are display: contents
+      // there, so the cards' order-* classes set the sequence. Desktop: details left, sticky summary right.
+      className="relative flex flex-col gap-3 pb-40 lg:grid lg:grid-cols-[1fr_400px] lg:items-start lg:gap-6 lg:pb-0"
     >
       <Honeypot />
-      <div className="space-y-8">
-        <h1 className="text-3xl font-extrabold tracking-tight">Checkout</h1>
-
-        {/* Mobile summary */}
-        <details className="rounded-2xl border border-line bg-surface lg:hidden">
-          <summary className="flex items-center justify-between px-4 py-3 text-sm font-semibold">
-            <span>
-              Order summary · {totals.itemCount} item{totals.itemCount > 1 ? "s" : ""}
-            </span>
-            <span className="text-base font-extrabold">{formatPaise(totals.total)}</span>
-          </summary>
-          <div className="border-t border-line p-4">
-            <SummaryLines lines={totals.lines} onQty={setLineQty} disabled={locked} />
-          </div>
-        </details>
-
-        <fieldset disabled={locked} className="space-y-4">
-          <legend className="mb-4 text-lg font-bold">Contact</legend>
-          <Field label="Full name" name="name" error={errors.name}>
-            <TextInput
-              name="name"
-              autoComplete="name"
-              placeholder="e.g. Priya Sharma"
-              error={errors.name}
-              onChange={(e) => setContactName(e.target.value)}
-              required
-            />
-          </Field>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Mobile number" name="phone" error={errors.phone} hint="For delivery updates from the courier">
-              <div className="relative">
-                <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-muted">+91</span>
-                <TextInput
-                  name="phone"
-                  type="tel"
-                  inputMode="numeric"
-                  autoComplete="tel-national"
-                  placeholder="98765 43210"
-                  maxLength={14}
-                  error={errors.phone}
-                  className="pl-13"
-                  onChange={(e) => setContactPhone(e.target.value)}
-                  required
-                />
-              </div>
-            </Field>
-            <Field label="Email" name="email" optional error={errors.email} hint="We'll email your order confirmation">
-              <TextInput
-                name="email"
-                type="email"
-                autoComplete="email"
-                placeholder="you@example.com"
-                error={errors.email}
-              />
-            </Field>
-          </div>
-          {recoveryCalls && (
-            <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-surface px-4 py-3 text-sm">
-              <input
-                type="checkbox"
-                name="callConsent"
-                checked={callConsent}
-                onChange={(e) => setCallConsent(e.target.checked)}
-                className="mt-0.5 size-4 shrink-0 accent-brand"
-              />
-              <span>
-                If I don&apos;t finish my order, {siteConfig.name} may call me or message me on WhatsApp about this
-                cart, sometimes with a discount.{" "}
-                <span className="text-muted">The call is made by an AI assistant.</span>
-              </span>
-            </label>
-          )}
-        </fieldset>
-
-        <fieldset disabled={locked} className="space-y-4">
-          <legend className="mb-4 text-lg font-bold">Delivery address</legend>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Field
-              label="Pincode"
-              name="pincode"
-              error={errors.pincode}
-              hint={
-                pinLookup === "loading"
-                  ? "Finding your city…"
-                  : pinLookup === "notfound"
-                    ? "Couldn't find this pincode, please fill city and state"
-                    : undefined
-              }
-            >
-              <TextInput
-                name="pincode"
-                inputMode="numeric"
-                autoComplete="postal-code"
-                placeholder="6-digit pincode"
-                maxLength={6}
-                error={errors.pincode}
-                onChange={(e) => {
-                  const pin = e.target.value.replace(/\D/g, "").slice(0, 6);
-                  e.target.value = pin;
-                  if (/^[1-9]\d{5}$/.test(pin)) void lookupPincode(pin);
-                  else setPinLookup("idle");
-                }}
-                required
-              />
-            </Field>
-            <Field label="City / District" name="city" error={errors.city}>
-              <TextInput
-                name="city"
-                autoComplete="address-level2"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                error={errors.city}
-                required
-              />
-            </Field>
-            <Field label="State" name="state" error={errors.state}>
-              <select
-                id="state"
-                name="state"
-                autoComplete="address-level1"
-                value={state}
-                onChange={(e) => setState(e.target.value)}
-                aria-invalid={errors.state ? true : undefined}
-                className={cn(inputClasses, "select-chevron appearance-none pr-10")}
-                required
-              >
-                <option value="">Select</option>
-                {INDIAN_STATES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </Field>
-          </div>
-          <Field label="House / flat no., building, street" name="address1" error={errors.address1}>
-            <TextInput name="address1" autoComplete="address-line1" error={errors.address1} required />
-          </Field>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Area / locality" name="address2" optional error={errors.address2}>
-              <TextInput name="address2" autoComplete="address-line2" error={errors.address2} />
-            </Field>
-            <Field label="Landmark" name="landmark" optional error={errors.landmark}>
-              <TextInput name="landmark" placeholder="e.g. near City Hospital" error={errors.landmark} />
-            </Field>
-          </div>
-        </fieldset>
-
-        <fieldset disabled={locked}>
-          <legend className="mb-4 text-lg font-bold">Payment</legend>
-          <div className="grid gap-3">
-            {onlinePayments && (
-              <PaymentOption
-                checked={method === "prepaid"}
-                onSelect={() => setPaymentMethod("prepaid")}
-                icon={<Smartphone className="size-5" />}
-                title="Pay online"
-                subtitle="UPI, cards, netbanking, wallets"
-                badge={codFeePaise > 0 ? `Save ${formatPaise(codFeePaise)}` : undefined}
-              />
-            )}
-            <PaymentOption
-              checked={method === "cod"}
-              onSelect={() => codAvailable && setPaymentMethod("cod")}
-              disabled={!codAvailable}
-              icon={<HandCoins className="size-5" />}
-              title="Cash on Delivery"
-              subtitle={
-                !codAtPincode
-                  ? "Not available for this pincode. Please pay online"
-                  : !codAvailable
-                    ? `Available on orders up to ${formatPaise(storefront.codMaxOrderValue)}`
-                    : codFeePaise > 0
-                      ? `+${formatPaise(codFeePaise)} COD charge · pay when it arrives`
-                      : "Pay when it arrives"
-              }
-            />
-          </div>
-        </fieldset>
-      </div>
-
-      {/* Summary + submit */}
-      <aside className="space-y-4 lg:sticky lg:top-24">
-        <div className="rounded-3xl border border-line bg-white p-5 shadow-card sm:p-6">
-          <h2 className="mb-4 hidden text-lg font-bold lg:block">Order summary</h2>
-          <div className="hidden lg:block">
-            <SummaryLines lines={totals.lines} onQty={setLineQty} disabled={locked} />
-          </div>
-
-          <div className="mt-4 border-t border-line pt-4">
-            {coupon ? (
-              <div className="flex items-center justify-between rounded-xl bg-success-soft px-3 py-2 text-sm">
-                <span className="flex items-center gap-2 font-semibold text-success">
-                  <Tag className="size-4" /> {coupon.code} applied
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCoupon(null);
-                    setCouponInput("");
-                  }}
-                  className="text-muted hover:text-ink"
-                  aria-label="Remove coupon"
-                  disabled={locked}
-                >
-                  <X className="size-4" />
-                </button>
-              </div>
-            ) : (
-              <div className="flex gap-2">
-                <input
-                  aria-label="Coupon code"
-                  placeholder="Coupon code"
-                  value={couponInput}
-                  onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      applyCoupon();
-                    }
-                  }}
-                  className={cn(inputClasses, "h-10 text-sm uppercase")}
-                  maxLength={30}
-                  disabled={locked}
-                />
-                <button
-                  type="button"
-                  onClick={() => applyCoupon()}
-                  disabled={couponPending || !couponInput.trim() || locked}
-                  className={buttonClasses("outline", "sm", "h-10 shrink-0")}
-                >
-                  {couponPending ? <Loader2 className="size-4 animate-spin" /> : "Apply"}
-                </button>
-              </div>
-            )}
-            {(couponMessage || totals.couponError) && (
-              <p className="mt-2 text-sm text-danger">{totals.couponError ?? couponMessage}</p>
-            )}
-          </div>
-
-          <dl className="mt-4 space-y-2 border-t border-line pt-4 text-sm">
-            <Row label="Subtotal" value={formatPaise(totals.subtotal)} />
-            {totals.discount > 0 && (
-              <Row label={`Coupon (${totals.coupon?.code})`} value={`−${formatPaise(totals.discount)}`} accent />
-            )}
-            <Row label="Delivery" value="Free" accent />
-            {totals.codFee > 0 && <Row label="COD charge" value={formatPaise(totals.codFee)} />}
-            <div className="flex items-baseline justify-between border-t border-line pt-3">
-              <dt className="text-base font-bold">Total</dt>
-              <dd className="text-2xl font-extrabold">{formatPaise(totals.total)}</dd>
-            </div>
-          </dl>
-          <p className="mt-1 text-right text-xs text-muted">Inclusive of all taxes</p>
-          {totals.mrpTotal - totals.subtotal + totals.discount > 0 && (
-            <p className="mt-2 rounded-xl bg-success-soft px-3 py-2 text-center text-sm font-semibold text-success">
-              You save {formatPaise(totals.mrpTotal - totals.subtotal + totals.discount)} on this order
-            </p>
-          )}
+      <div className="contents lg:block lg:space-y-4">
+        <div className="order-1 flex items-center justify-between gap-3">
+          <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">Checkout</h1>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-bold text-success shadow-card">
+            <ShieldCheck className="size-4" aria-hidden="true" /> Secure checkout
+          </span>
         </div>
 
-        {formError && (
-          <p className="rounded-2xl bg-danger-soft px-4 py-3 text-sm text-danger" role="alert">
-            {formError}
-          </p>
-        )}
+        <section id="delivery-details" aria-labelledby="details-title" className={cn(card, "order-4")}>
+          <h2 id="details-title" className="flex items-center gap-3 font-extrabold">
+            <IconTile icon={MapPin} /> Delivery details
+          </h2>
+          <fieldset disabled={locked} className="mt-5 space-y-4">
+            <legend className={subheading}>Contact</legend>
+            <Field label="Full name" name="name" error={errors.name}>
+              <TextInput
+                name="name"
+                autoComplete="name"
+                placeholder="e.g. Priya Sharma"
+                error={errors.name}
+                onChange={(e) => setContactName(e.target.value)}
+                required
+              />
+            </Field>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field
+                label="Mobile number"
+                name="phone"
+                error={errors.phone}
+                hint="For delivery updates from the courier"
+              >
+                <div className="relative">
+                  <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-muted">
+                    +91
+                  </span>
+                  <TextInput
+                    name="phone"
+                    type="tel"
+                    inputMode="numeric"
+                    autoComplete="tel-national"
+                    placeholder="98765 43210"
+                    maxLength={14}
+                    error={errors.phone}
+                    className="pl-13"
+                    onChange={(e) => setContactPhone(e.target.value)}
+                    required
+                  />
+                </div>
+              </Field>
+              <Field
+                label="Email"
+                name="email"
+                optional
+                error={errors.email}
+                hint="We'll email your order confirmation"
+              >
+                <TextInput
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  error={errors.email}
+                />
+              </Field>
+            </div>
+            {recoveryCalls && (
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-surface px-4 py-3 text-sm">
+                <input
+                  type="checkbox"
+                  name="callConsent"
+                  checked={callConsent}
+                  onChange={(e) => setCallConsent(e.target.checked)}
+                  className="mt-0.5 size-4 shrink-0 accent-brand"
+                />
+                <span>
+                  If I don&apos;t finish my order, {siteConfig.name} may call me or message me on WhatsApp about this
+                  cart, sometimes with a discount.{" "}
+                  <span className="text-muted">The call is made by an AI assistant.</span>
+                </span>
+              </label>
+            )}
+          </fieldset>
 
-        {pendingPayment ? (
-          <div className="space-y-3 rounded-3xl border border-warn/30 bg-warn-soft p-5">
+          <fieldset disabled={locked} className="mt-6 space-y-4 border-t border-line pt-5">
+            <legend className={cn(subheading, "float-left w-full")}>Delivery address</legend>
+            <div className="clear-both grid gap-4 sm:grid-cols-3">
+              <Field
+                label="Pincode"
+                name="pincode"
+                error={errors.pincode}
+                hint={
+                  pinLookup === "loading"
+                    ? "Finding your city…"
+                    : pinLookup === "notfound"
+                      ? "Couldn't find this pincode, please fill city and state"
+                      : undefined
+                }
+              >
+                <TextInput
+                  name="pincode"
+                  inputMode="numeric"
+                  autoComplete="postal-code"
+                  placeholder="6-digit pincode"
+                  maxLength={6}
+                  error={errors.pincode}
+                  onChange={(e) => {
+                    const pin = e.target.value.replace(/\D/g, "").slice(0, 6);
+                    e.target.value = pin;
+                    setPincodeText(pin);
+                    if (/^[1-9]\d{5}$/.test(pin)) void lookupPincode(pin);
+                    else setPinLookup("idle");
+                  }}
+                  required
+                />
+              </Field>
+              <Field label="City / District" name="city" error={errors.city}>
+                <TextInput
+                  name="city"
+                  autoComplete="address-level2"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  error={errors.city}
+                  required
+                />
+              </Field>
+              <Field label="State" name="state" error={errors.state}>
+                <select
+                  id="state"
+                  name="state"
+                  autoComplete="address-level1"
+                  value={state}
+                  onChange={(e) => setState(e.target.value)}
+                  aria-invalid={errors.state ? true : undefined}
+                  className={cn(inputClasses, "select-chevron appearance-none pr-10")}
+                  required
+                >
+                  <option value="">Select</option>
+                  {INDIAN_STATES.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+            <Field label="House / flat no., building, street" name="address1" error={errors.address1}>
+              <TextInput
+                name="address1"
+                autoComplete="address-line1"
+                error={errors.address1}
+                onChange={(e) => setAddress1Text(e.target.value)}
+                required
+              />
+            </Field>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Area / locality" name="address2" optional error={errors.address2}>
+                <TextInput name="address2" autoComplete="address-line2" error={errors.address2} />
+              </Field>
+              <Field label="Landmark" name="landmark" optional error={errors.landmark}>
+                <TextInput name="landmark" placeholder="e.g. near City Hospital" error={errors.landmark} />
+              </Field>
+            </div>
+          </fieldset>
+        </section>
+
+        <section className={cn(card, "order-5")}>
+          <fieldset disabled={locked}>
+            <legend className="float-left flex w-full items-center gap-3 font-extrabold">
+              <IconTile icon={Wallet} /> Payment method
+            </legend>
+            <div className="clear-both grid gap-2.5 pt-4">
+              {onlinePayments && (
+                <PaymentOption
+                  checked={method === "prepaid"}
+                  onSelect={() => setPaymentMethod("prepaid")}
+                  icon={Smartphone}
+                  title="Pay online"
+                  subtitle="UPI, cards, netbanking, wallets"
+                  badge={codFeePaise > 0 ? `Save ${formatPaise(codFeePaise)}` : undefined}
+                />
+              )}
+              <PaymentOption
+                checked={method === "cod"}
+                onSelect={() => codAvailable && setPaymentMethod("cod")}
+                disabled={!codAvailable}
+                icon={HandCoins}
+                title="Cash on Delivery"
+                subtitle={
+                  !codAtPincode
+                    ? "Not available for this pincode. Please pay online"
+                    : !codAvailable
+                      ? `Available on orders up to ${formatPaise(storefront.codMaxOrderValue)}`
+                      : codFeePaise > 0
+                        ? `+${formatPaise(codFeePaise)} COD charge · pay when it arrives`
+                        : "Pay when it arrives"
+                }
+              />
+            </div>
+          </fieldset>
+        </section>
+      </div>
+
+      <aside className="contents lg:sticky lg:top-24 lg:block lg:space-y-4">
+        <section aria-labelledby="items-title" className={cn(card, "order-3")}>
+          <div className="flex items-center gap-3">
+            <IconTile icon={Truck} />
+            <div className="min-w-0">
+              <h2 id="items-title" className="font-extrabold">
+                {totals.shippingFee === 0 ? "Free delivery" : "Delivery"} in {siteConfig.shipping.delivery}
+              </h2>
+              <p className="text-sm text-muted">
+                Shipment of {itemsLabel} · dispatched within {siteConfig.shipping.dispatch}
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 border-t border-line pt-4">
+            <SummaryLines lines={totals.lines} onQty={setLineQty} disabled={locked} />
+          </div>
+        </section>
+
+        <section aria-label="Coupon" className={cn(card, "order-6")}>
+          {coupon ? (
+            <div className="flex items-center gap-3">
+              <IconTile icon={BadgePercent} />
+              <div className="min-w-0 flex-1">
+                <p className="font-extrabold">{coupon.code} applied</p>
+                {totals.discount > 0 && (
+                  <p className="text-sm font-semibold text-success">You save {formatPaise(totals.discount)}</p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setCoupon(null);
+                  setCouponInput("");
+                }}
+                className="grid size-9 shrink-0 cursor-pointer place-items-center rounded-full text-muted hover:bg-surface hover:text-ink"
+                aria-label="Remove coupon"
+                disabled={locked}
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <IconTile icon={Tag} />
+              <input
+                aria-label="Coupon code"
+                placeholder="Have a coupon code?"
+                value={couponInput}
+                onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    applyCoupon();
+                  }
+                }}
+                className={cn(inputClasses, "h-11 min-w-0 flex-1 text-sm uppercase placeholder:normal-case")}
+                maxLength={30}
+                disabled={locked}
+              />
+              <button
+                type="button"
+                onClick={() => applyCoupon()}
+                disabled={couponPending || !couponInput.trim() || locked}
+                className="h-11 shrink-0 cursor-pointer rounded-xl px-3 text-sm font-extrabold text-brand hover:bg-brand-soft disabled:cursor-default disabled:text-muted disabled:hover:bg-transparent"
+              >
+                {couponPending ? <Loader2 className="size-4 animate-spin" /> : "Apply"}
+              </button>
+            </div>
+          )}
+          {(couponMessage || totals.couponError) && (
+            <p className="mt-2 text-sm text-danger">{totals.couponError ?? couponMessage}</p>
+          )}
+        </section>
+
+        <section aria-labelledby="bill-title" className={cn(card, "order-7")}>
+          <h2 id="bill-title" className="font-extrabold">
+            Bill details
+          </h2>
+          <dl className="mt-3 space-y-2.5 text-sm">
+            <BillRow
+              icon={ReceiptText}
+              label="Items total"
+              chip={mrpSaving > 0 ? `Saved ${formatPaise(mrpSaving)}` : undefined}
+              strike={mrpSaving > 0 ? formatPaise(totals.mrpTotal) : undefined}
+              value={formatPaise(totals.subtotal)}
+            />
+            {totals.discount > 0 && (
+              <BillRow
+                icon={BadgePercent}
+                label={`Coupon (${totals.coupon?.code})`}
+                value={`−${formatPaise(totals.discount)}`}
+                accent
+              />
+            )}
+            <BillRow
+              icon={Truck}
+              label="Delivery charge"
+              value={totals.shippingFee > 0 ? formatPaise(totals.shippingFee) : "FREE"}
+              accent={totals.shippingFee === 0}
+            />
+            {totals.codFee > 0 && <BillRow icon={HandCoins} label="COD charge" value={formatPaise(totals.codFee)} />}
+          </dl>
+          <div className="mt-3 flex items-baseline justify-between border-t border-dashed border-line pt-3">
+            <p className="font-extrabold">Grand total</p>
+            <p data-testid="grand-total" className="text-lg font-extrabold">
+              {formatPaise(totals.total)}
+            </p>
+          </div>
+          <p className="text-xs text-muted">Inclusive of all taxes</p>
+          {savings > 0 && (
+            <div className="mt-4 rounded-xl bg-success-soft px-3 py-2.5 text-success">
+              <p className="flex items-center justify-between text-sm font-extrabold">
+                <span>Your total savings</span>
+                <span>{formatPaise(savings)}</span>
+              </p>
+              <p className="mt-0.5 text-xs">
+                Includes{" "}
+                {[
+                  mrpSaving > 0 && `${formatPaise(mrpSaving)} off MRP`,
+                  totals.discount > 0 && `${formatPaise(totals.discount)} coupon discount`,
+                ]
+                  .filter(Boolean)
+                  .join(" and ")}
+              </p>
+            </div>
+          )}
+        </section>
+
+        {pendingPayment && (
+          <div
+            ref={pendingRef}
+            className="order-2 scroll-mt-24 space-y-3 rounded-2xl border border-warn/30 bg-warn-soft p-4 sm:p-5"
+          >
             <p className="font-bold">Payment not completed</p>
             <p className="text-sm text-ink-soft">
               Your order is saved. Try the payment again, or switch to Cash on Delivery.
             </p>
+            {formError && (
+              <p className="rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger" role="alert">
+                {formError}
+              </p>
+            )}
             <button
               type="button"
               onClick={retryPayment}
@@ -690,26 +881,44 @@ export function CheckoutForm({ onlinePayments, recoveryCalls }: { onlinePayments
               Change order details
             </button>
           </div>
-        ) : (
-          <button type="submit" disabled={pending} className={buttonClasses("primary", "lg", "h-14 w-full text-lg")}>
-            {pending ? (
-              <>
-                <Loader2 className="size-5 animate-spin" /> Processing…
-              </>
-            ) : method === "prepaid" ? (
-              <>
-                <LockKeyhole className="size-5" /> Pay {formatPaise(totals.total)} securely
-              </>
-            ) : (
-              <>Place order · {formatPaise(totals.total)}</>
-            )}
-          </button>
         )}
 
-        <p className="flex items-start gap-2 text-xs text-muted">
-          <MapPin className="mt-0.5 size-4 shrink-0" />
-          <span>
-            Free delivery in {siteConfig.shipping.delivery}. By placing this order you agree to our{" "}
+        {!pendingPayment && (
+          <div className="hidden space-y-3 lg:block">
+            {formError && wide && (
+              <p className="rounded-2xl bg-danger-soft px-4 py-3 text-sm text-danger" role="alert">
+                {formError}
+              </p>
+            )}
+            <button type="submit" disabled={pending} className={buttonClasses("primary", "lg", "h-14 w-full text-lg")}>
+              {pending ? (
+                <>
+                  <Loader2 className="size-5 animate-spin" /> Processing…
+                </>
+              ) : method === "prepaid" ? (
+                <>
+                  <LockKeyhole className="size-5" /> Pay {formatPaise(totals.total)} securely
+                </>
+              ) : (
+                <>Place order · {formatPaise(totals.total)}</>
+              )}
+            </button>
+          </div>
+        )}
+
+        <section aria-labelledby="policy-title" className={cn(card, "order-8 text-sm")}>
+          <h2 id="policy-title" className="flex items-center gap-2 font-extrabold">
+            <RotateCcw className="size-4 text-muted" aria-hidden="true" /> Cancellation policy
+          </h2>
+          <p className="mt-1.5 text-muted">
+            Cancel any time before your order is dispatched. If it arrives damaged, defective or wrong, tell us within{" "}
+            {siteConfig.shipping.claimWindowDays} days of delivery for a replacement or refund.{" "}
+            <Link href="/policies/refund" className="font-semibold text-brand hover:underline">
+              Read the policy
+            </Link>
+          </p>
+          <p className="mt-3 border-t border-line pt-3 text-xs text-muted">
+            By placing this order you agree to our{" "}
             <Link href="/policies/terms" className="underline">
               Terms
             </Link>{" "}
@@ -718,18 +927,140 @@ export function CheckoutForm({ onlinePayments, recoveryCalls }: { onlinePayments
               Privacy Policy
             </Link>
             .
-          </span>
-        </p>
+          </p>
+        </section>
       </aside>
+
+      {/* Phones: where it's going, how it's paid, and the button, always in reach. */}
+      {!pendingPayment && (
+        <div
+          ref={barRef}
+          data-checkout-bar
+          className="fixed inset-x-0 bottom-0 z-40 rounded-t-3xl border-t border-line bg-white shadow-[0_-12px_32px_-16px_rgb(14_42_31/0.3)] sm:px-[max(0px,calc((100%_-_42rem)/2))] lg:hidden"
+        >
+          {formError && !wide && (
+            <p className="mx-4 mt-3 rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger" role="alert">
+              {formError}
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={goToDetails}
+            disabled={locked}
+            className="flex w-full cursor-pointer items-center gap-3 px-4 pt-3 pb-2.5 text-left"
+          >
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand-soft text-brand">
+              <MapPin className="size-4" aria-hidden="true" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-extrabold">
+                {addressLine ? `Delivering to ${firstName || "you"}` : "Add delivery address"}
+              </span>
+              <span className="block truncate text-xs text-muted">
+                {addressLine || "Your name, phone and address, in one step"}
+              </span>
+            </span>
+            <span className="shrink-0 text-sm font-extrabold text-brand">{addressLine ? "Change" : "Add"}</span>
+          </button>
+          <div className="flex items-center gap-3 border-t border-line px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            {canSwitch ? (
+              <button
+                ref={payButtonRef}
+                type="button"
+                onClick={() => setPayOpen(true)}
+                disabled={locked}
+                aria-haspopup="dialog"
+                className="shrink-0 cursor-pointer text-left max-[359px]:hidden"
+              >
+                <PayUsing method={method} switchable />
+              </button>
+            ) : (
+              <div className="shrink-0 max-[359px]:hidden">
+                <PayUsing method={method} />
+              </div>
+            )}
+            <button
+              type="submit"
+              disabled={pending}
+              className="flex h-14 min-w-0 flex-1 cursor-pointer items-center justify-between gap-2 rounded-2xl bg-brand px-4 text-white shadow-lift transition-colors hover:bg-brand-dark disabled:opacity-70"
+            >
+              <span className="text-left leading-none">
+                <span className="block text-base font-extrabold">{formatPaise(totals.total)}</span>
+                <span className="mt-1 block text-[10px] font-bold tracking-wider uppercase">Total</span>
+              </span>
+              <span className="flex items-center gap-1 text-[15px] font-extrabold whitespace-nowrap">
+                {pending ? (
+                  <>
+                    <Loader2 className="size-5 animate-spin" /> Processing…
+                  </>
+                ) : (
+                  <>
+                    {method === "prepaid" ? "Pay now" : "Place order"}
+                    <ChevronRight className="size-5" aria-hidden="true" />
+                  </>
+                )}
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {payOpen && canSwitch && (
+        <PaymentSheet
+          method={method}
+          options={payOptions}
+          onPick={(value) => {
+            setPaymentMethod(value);
+            closePay();
+          }}
+          onClose={closePay}
+        />
+      )}
     </form>
   );
 }
 
-function Row({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+const card = "rounded-2xl bg-white p-4 shadow-card sm:p-5";
+const subheading = "mb-3 text-xs font-bold tracking-wider text-muted uppercase";
+
+function IconTile({ icon: Icon }: { icon: LucideIcon }) {
   return (
-    <div className="flex justify-between">
-      <dt className="text-muted">{label}</dt>
-      <dd className={cn("font-semibold", accent && "text-success")}>{value}</dd>
+    <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand">
+      <Icon className="size-5" aria-hidden="true" />
+    </span>
+  );
+}
+
+function BillRow({
+  icon: Icon,
+  label,
+  value,
+  chip,
+  strike,
+  accent,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  chip?: string;
+  strike?: string;
+  accent?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <dt className="flex min-w-0 items-center gap-2 text-ink-soft">
+        <Icon className="size-4 shrink-0 text-muted" aria-hidden="true" />
+        <span className="truncate">{label}</span>
+        {chip && (
+          <span className="shrink-0 rounded-md bg-success-soft px-1.5 py-0.5 text-[11px] font-bold text-success">
+            {chip}
+          </span>
+        )}
+      </dt>
+      <dd className="shrink-0 text-right">
+        {strike && <span className="mr-1.5 text-xs text-muted line-through">{strike}</span>}
+        <span className={cn("font-semibold", accent && "text-success")}>{value}</span>
+      </dd>
     </div>
   );
 }
@@ -747,40 +1078,39 @@ function SummaryLines({
     <ul className="space-y-4">
       {lines.map((line) => (
         <li key={line.packId} className="flex items-center gap-3">
-          <PackThumb count={line.count} className="size-14" />
+          <PackThumb count={line.count} className="size-16 border border-line" />
           <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold">{line.name}</p>
+            <p className="font-semibold">{line.name}</p>
             <p className="text-xs text-muted">{line.count} sponges</p>
-            <div
-              className="mt-1 flex items-center rounded-full border border-line bg-white"
-              style={{ width: "fit-content" }}
-            >
+          </div>
+          <div className="flex shrink-0 flex-col items-end gap-1.5">
+            <div className="flex h-8 items-center rounded-lg bg-brand text-white">
               <button
                 type="button"
-                className="grid size-7 place-items-center disabled:opacity-40"
+                className="grid h-full w-8 cursor-pointer place-items-center rounded-l-lg hover:bg-brand-dark disabled:cursor-default disabled:opacity-40"
                 onClick={() => onQty(line.packId, line.qty - 1)}
                 disabled={disabled}
                 aria-label={`Decrease ${line.name} quantity`}
               >
-                <Minus className="size-3.5" />
+                <Minus className="size-3.5" strokeWidth={3} />
               </button>
-              <span className="w-6 text-center text-sm font-semibold">{line.qty}</span>
+              <span className="w-5 text-center text-sm font-extrabold">{line.qty}</span>
               <button
                 type="button"
-                className="grid size-7 place-items-center disabled:opacity-40"
+                className="grid h-full w-8 cursor-pointer place-items-center rounded-r-lg hover:bg-brand-dark disabled:cursor-default disabled:opacity-40"
                 onClick={() => onQty(line.packId, line.qty + 1)}
                 disabled={disabled || line.qty >= commerce.maxQtyPerPack}
                 aria-label={`Increase ${line.name} quantity`}
               >
-                <Plus className="size-3.5" />
+                <Plus className="size-3.5" strokeWidth={3} />
               </button>
             </div>
-          </div>
-          <div className="text-right">
-            <p className="font-semibold">{formatPaise(line.lineTotal)}</p>
-            {line.unitMrp * line.qty > line.lineTotal && (
-              <p className="text-xs text-muted line-through">{formatPaise(line.unitMrp * line.qty)}</p>
-            )}
+            <p className="text-sm">
+              {line.unitMrp * line.qty > line.lineTotal && (
+                <span className="mr-1.5 text-xs text-muted line-through">{formatPaise(line.unitMrp * line.qty)}</span>
+              )}
+              <span className="font-extrabold">{formatPaise(line.lineTotal)}</span>
+            </p>
           </div>
         </li>
       ))}
@@ -800,7 +1130,7 @@ function PaymentOption({
   checked: boolean;
   onSelect: () => void;
   disabled?: boolean;
-  icon: ReactNode;
+  icon: LucideIcon;
   title: string;
   subtitle: string;
   badge?: string;
@@ -808,8 +1138,8 @@ function PaymentOption({
   return (
     <label
       className={cn(
-        "flex cursor-pointer items-center gap-4 rounded-2xl border-2 p-4 transition-colors",
-        checked ? "border-brand bg-brand-soft/60" : "border-line hover:border-ink/25",
+        "flex cursor-pointer items-center gap-3 rounded-2xl border-2 p-3.5 transition-colors",
+        checked ? "border-brand bg-brand-soft/50" : "border-line hover:border-ink/25",
         disabled && "cursor-not-allowed opacity-50",
       )}
     >
@@ -821,6 +1151,14 @@ function PaymentOption({
         disabled={disabled}
         className="sr-only"
       />
+      <IconTile icon={icon} />
+      <span className="min-w-0 flex-1">
+        <span className="flex flex-wrap items-center gap-2 font-bold">
+          {title}
+          {badge && <span className="rounded-full bg-success-soft px-2 py-0.5 text-xs text-success">{badge}</span>}
+        </span>
+        <span className="block text-sm text-muted">{subtitle}</span>
+      </span>
       <span
         aria-hidden="true"
         className={cn(
@@ -830,33 +1168,152 @@ function PaymentOption({
       >
         {checked && <span className="size-2.5 rounded-full bg-brand" />}
       </span>
-      <span className="text-brand">{icon}</span>
-      <span className="flex-1">
-        <span className="flex flex-wrap items-center gap-2 font-bold">
-          {title}
-          {badge && <span className="rounded-full bg-success-soft px-2 py-0.5 text-xs text-success">{badge}</span>}
-        </span>
-        <span className="block text-sm text-muted">{subtitle}</span>
-      </span>
     </label>
+  );
+}
+
+/** "Pay using" in the phone's bottom bar. */
+function PayUsing({ method, switchable }: { method: PaymentMethod; switchable?: boolean }) {
+  return (
+    <>
+      <span className="flex items-center gap-1 text-[10px] font-bold tracking-wider text-muted uppercase">
+        Pay using {switchable && <ChevronUp className="size-3" aria-hidden="true" />}
+      </span>
+      <span className="mt-0.5 block text-sm font-extrabold">
+        {method === "prepaid" ? "UPI / Card" : "Cash on Delivery"}
+      </span>
+    </>
+  );
+}
+
+type PayOption = {
+  value: PaymentMethod;
+  icon: LucideIcon;
+  title: string;
+  subtitle: string;
+  total: number | null;
+  badge?: string;
+};
+
+/** Phone bottom sheet to switch payment method from the bottom bar. */
+function PaymentSheet({
+  method,
+  options,
+  onPick,
+  onClose,
+}: {
+  method: PaymentMethod;
+  options: PayOption[];
+  onPick: (value: PaymentMethod) => void;
+  onClose: () => void;
+}) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    panelRef.current?.querySelector<HTMLElement>('[aria-checked="true"]')?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [onClose]);
+
+  return createPortal(
+    <div className="fixed inset-0 z-[70] flex items-end lg:hidden">
+      <button
+        type="button"
+        tabIndex={-1}
+        aria-label="Close"
+        onClick={onClose}
+        className="animate-fade-in absolute inset-0 bg-ink/40"
+      />
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pay-sheet-title"
+        className="animate-sheet-up relative w-full rounded-t-3xl bg-white px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]"
+      >
+        <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-line" aria-hidden="true" />
+        <div className="flex items-center justify-between">
+          <h2 id="pay-sheet-title" className="text-lg font-extrabold">
+            Choose payment method
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="grid size-9 cursor-pointer place-items-center rounded-full hover:bg-surface"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+        <div role="radiogroup" aria-labelledby="pay-sheet-title" className="mt-4 grid gap-2.5">
+          {options.map(({ value, icon: Icon, title, subtitle, total, badge }) => {
+            const selected = method === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                onClick={() => onPick(value)}
+                className={cn(
+                  "flex w-full cursor-pointer items-center gap-3 rounded-2xl border-2 p-3.5 text-left transition-colors",
+                  selected ? "border-brand bg-brand-soft/50" : "border-line",
+                )}
+              >
+                <IconTile icon={Icon} />
+                <span className="min-w-0 flex-1">
+                  <span className="flex flex-wrap items-center gap-2 font-bold">
+                    {title}
+                    {badge && (
+                      <span className="rounded-full bg-success-soft px-2 py-0.5 text-xs text-success">{badge}</span>
+                    )}
+                  </span>
+                  <span className="block text-sm text-muted">{subtitle}</span>
+                </span>
+                {total !== null && <span className="shrink-0 font-extrabold">{formatPaise(total)}</span>}
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "grid size-5 shrink-0 place-items-center rounded-full",
+                    selected ? "bg-brand text-white" : "border-2 border-line",
+                  )}
+                >
+                  {selected && <Check className="size-3.5" strokeWidth={3} />}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>,
+    document.body,
   );
 }
 
 export function CheckoutSkeleton() {
   return (
     <div
-      className="grid animate-pulse gap-8 lg:grid-cols-[1fr_400px]"
+      className="grid animate-pulse gap-3 lg:grid-cols-[1fr_400px] lg:gap-6"
       role="status"
       aria-busy="true"
       aria-label="Loading checkout"
     >
-      <div className="space-y-4">
-        <div className="h-9 w-40 rounded-lg bg-surface" />
-        {Array.from({ length: 6 }, (_, i) => (
-          <div key={i} className="h-12 rounded-xl bg-surface" />
-        ))}
+      <div className="space-y-3 lg:space-y-4">
+        <div className="h-9 w-40 rounded-lg bg-white" />
+        <div className="h-40 rounded-2xl bg-white" />
+        <div className="h-96 rounded-2xl bg-white" />
       </div>
-      <div className="h-80 rounded-3xl bg-surface" />
+      <div className="hidden space-y-4 lg:block">
+        <div className="h-48 rounded-2xl bg-white" />
+        <div className="h-64 rounded-2xl bg-white" />
+      </div>
     </div>
   );
 }

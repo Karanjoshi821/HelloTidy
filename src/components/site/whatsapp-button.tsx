@@ -21,7 +21,7 @@ export function WhatsAppFloat({ className }: { className?: string }) {
       aria-label="Chat with us on WhatsApp"
       data-track-where="floating button"
       className={cn(
-        "fixed right-4 bottom-24 z-30 grid size-13 place-items-center rounded-full bg-[#1fa855] text-white shadow-lg transition-transform hover:scale-105 md:bottom-6",
+        "whatsapp-float fixed right-4 bottom-24 z-30 grid size-13 place-items-center rounded-full bg-[#1fa855] text-white shadow-lg transition-transform hover:scale-105 md:bottom-6",
         className,
       )}
     >

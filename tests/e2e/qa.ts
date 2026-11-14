@@ -1246,7 +1246,7 @@ async function main() {
       await p.selectOption('select[name="state"]', "Maharashtra");
       await p.fill('input[name="address1"]', "Flat 12, Shanti Apartments, MG Road");
     };
-    const checkoutTotal = async (p: Page) => (await p.locator("aside dd.text-2xl").textContent())?.trim() ?? "";
+    const checkoutTotal = async (p: Page) => (await p.getByTestId("grand-total").textContent())?.trim() ?? "";
     const savePack = async () => {
       await a.getByRole("button", { name: "Save pack" }).click();
       return until(a.getByText("The store shows the change right away"));
@@ -1398,7 +1398,7 @@ async function main() {
       await savePack();
       await page.getByRole("button", { name: /Place order/ }).click();
       const warned = await until(page.locator('aside [role="alert"]', { hasText: "Prices were just updated" }));
-      const refreshed = await until(page.locator("aside dd.text-2xl", { hasText: "₹598" }));
+      const refreshed = await until(page.getByTestId("grand-total").filter({ hasText: "₹598" }));
       const stayed = !page.url().includes("/order/");
       await page.getByRole("button", { name: /Place order/ }).click();
       await page.waitForURL(/\/order\//, { timeout: 30_000 });

@@ -25,7 +25,7 @@ export function CookieBanner() {
   return (
     <section
       aria-labelledby="cookie-banner-title"
-      className="animate-fade-in fixed inset-x-3 bottom-3 z-[45] sm:inset-x-auto sm:bottom-5 sm:left-5 sm:w-[25rem]"
+      className="cookie-banner animate-fade-in fixed inset-x-3 bottom-3 z-[45] sm:inset-x-auto sm:bottom-5 sm:left-5 sm:w-[25rem]"
     >
       <div className="relative rounded-2xl border border-line bg-white p-4 shadow-xl sm:p-5">
         {reviewing && (
