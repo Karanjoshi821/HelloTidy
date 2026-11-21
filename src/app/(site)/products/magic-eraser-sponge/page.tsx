@@ -245,7 +245,7 @@ export default async function ProductPage() {
       <Section>
         <SectionHeading
           eyebrow="Why Hello Tidy"
-          title="Less scrubbing, no chemicals"
+          title="Less scrubbing, no detergent"
           description="How a Hello Tidy sponge compares with the usual cloth and cleaner, including where it isn't the right tool."
         />
         <div className="mx-auto max-w-3xl">

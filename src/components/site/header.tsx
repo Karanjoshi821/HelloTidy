@@ -30,7 +30,7 @@ function highlightsFor(onlinePayments: boolean): { icon: LucideIcon; text: strin
     { icon: PackageCheck, text: `Dispatched within ${siteConfig.shipping.dispatch}` },
     { icon: RefreshCcw, text: `${siteConfig.shipping.claimWindowDays}-day replacement on damaged items` },
     ...(onlinePayments ? [{ icon: ShieldCheck, text: "Secure UPI, card & netbanking payments" }] : []),
-    { icon: Droplets, text: "Works with just water, no chemicals" },
+    { icon: Droplets, text: "Works with just water, no detergent" },
   ];
 }
 

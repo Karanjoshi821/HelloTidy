@@ -167,7 +167,7 @@ export function SpecsTable() {
       label: "Consumer care",
       value: `${siteConfig.contact.email} · ${siteConfig.contact.phoneDisplay}`,
     },
-  ];
+  ].filter((row) => !row.value.startsWith("TODO")); // never show an unfilled placeholder to shoppers
   return (
     <dl className="divide-y divide-line overflow-hidden rounded-3xl border border-line">
       {rows.map((row) => (
@@ -194,7 +194,7 @@ export async function CompareTable() {
       usual: "Smear, or need hard scrubbing",
       oursWins: true,
     },
-    { label: "Chemicals", ours: "None, just water", usual: "Detergent or a strong cleaner", oursWins: true },
+    { label: "Cleaning liquid", ours: "None, just water", usual: "Detergent or a strong cleaner", oursWins: true },
     { label: "Effort", ours: "A light rub, a few minutes", usual: "Scrubbing, often twice", oursWins: true },
     { label: "Corners and grooves", ours: "Cut it to any size", usual: "Hard to reach", oursWins: true },
     {

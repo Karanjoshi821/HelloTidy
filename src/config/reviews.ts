@@ -152,11 +152,12 @@ export function reviewStats(list: Review[] = reviews) {
 export const genuineReviews = reviews.filter((r) => !r.sample);
 
 /**
- * Karan's call (11 Nov 2026): show the sample reviews on the live site for now,
- * always under the "these are fake" notice and labelled "Sample review". They
- * never reach structured data. Set to false to hide them again.
+ * Off since 21 Nov 2026: Google Merchant Center suspended the store for
+ * Misrepresentation, and invented reviews (with AI "customer photos") are one of
+ * the clearest triggers. Keep this off until genuine reviews replace the samples.
+ * Samples never reach structured data either way.
  */
-export const SHOW_SAMPLE_REVIEWS = true;
+export const SHOW_SAMPLE_REVIEWS = false;
 
 /**
  * Reviews the site shows: genuine ones, plus the samples while

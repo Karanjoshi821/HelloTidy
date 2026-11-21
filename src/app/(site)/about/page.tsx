@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { ArrowRight, BadgeCheck, FlaskConicalOff, HeartHandshake } from "lucide-react";
 import { product } from "@/config/products";
 import { siteConfig } from "@/config/site";
@@ -48,13 +49,20 @@ export default function AboutPage() {
       />
       <div className="prose-brand mt-8 text-lg">
         <p>
-          <strong>{siteConfig.name}</strong> makes clever, honest fixes for everyday homes. We started with one simple
+          <strong>{siteConfig.name}</strong> brings clever, honest fixes to everyday homes. We started with one simple
           product we love: the melamine foam &quot;magic&quot; sponge. Add water, rub gently, and crayon on the walls,
           grimy switchboards and soap scum simply lift away.
         </p>
         <p>
           We sell directly to you, so we can keep prices fair, deliver free across India and stay close to your
           feedback.
+        </p>
+        <p>
+          {siteConfig.name} is a small, independent brand run by {siteConfig.legalName} from {siteConfig.address.city},{" "}
+          {siteConfig.address.state}. You can reach us at{" "}
+          <a href={`mailto:${siteConfig.contact.email}`}>{siteConfig.contact.email}</a> or{" "}
+          <a href={`tel:+${siteConfig.contact.phone}`}>{siteConfig.contact.phoneDisplay}</a>, and our registered address
+          is on the <Link href="/contact">Contact page</Link>.
         </p>
       </div>
       <ul className="mt-12 grid gap-5 sm:grid-cols-3">

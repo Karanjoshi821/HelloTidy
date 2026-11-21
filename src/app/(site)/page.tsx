@@ -63,7 +63,7 @@ export default async function HomePage() {
     ...orderFaqs({ ...storefront, onlinePayments: isRazorpayEnabled() }).slice(0, 3),
   ];
   const benefits = [
-    { icon: FlaskConicalOff, title: "No chemicals", text: "Just water. No harsh cleaners or fumes in your home." },
+    { icon: FlaskConicalOff, title: "No detergent", text: "Just water. No harsh cleaners or fumes in your home." },
     { icon: Eraser, title: "Tough on marks", text: "Lifts crayon, scuffs and grime that cloths leave behind." },
     { icon: Scissors, title: "Cut to size", text: "Snip into small pieces for corners, grooves and grout." },
     { icon: BadgeIndianRupee, title: "Great value", text: valueText(storefront) },
@@ -166,7 +166,10 @@ export default async function HomePage() {
         </div>
       </Section>
 
-      <VideoReviewsSection shopHref={productHref} reviewsHref={`${productHref}#reviews`} />
+      <VideoReviewsSection
+        shopHref={productHref}
+        reviewsHref={displayedReviews.length ? `${productHref}#reviews` : undefined}
+      />
 
       <Section className="bg-surface">
         <SectionHeading eyebrow="What it cleans" title="One sponge, a hundred stubborn marks" />
